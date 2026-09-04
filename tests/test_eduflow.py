@@ -373,5 +373,157 @@ def test_country_currency_and_regional_settings(app_instance, client):
             assert settings.currency == '₹'
             assert settings.timezone == 'Asia/Kolkata'
 
+def test_super_admin_email_login_and_username_rejection(app_instance, client):
+    with app_instance.app_context():
+        sa = User(username='admin', email='superadmin@eduflow.academy', first_name='Super', last_name='Admin', role=Role.SUPER_ADMIN)
+        sa.set_password('AdminSecret123')
+        db.session.add(sa)
+        db.session.commit()
+
+        # 1. Logging in with email + password succeeds
+        res_email = client.post('/auth/login', data={
+            'login_type': 'super_admin',
+            'email': 'superadmin@eduflow.academy',
+            'password': 'AdminSecret123'
+        }, follow_redirects=True)
+        assert res_email.status_code == 200
+        assert b'Dashboard' in res_email.data or b'Overview' in res_email.data
+
+        # Logout
+        client.get('/auth/logout')
+
+        # 2. Attempting login with username "admin" for Super Admin is rejected with warning
+        res_username = client.post('/auth/login', data={
+            'login_type': 'portal',
+            'login_identifier': 'admin',
+            'password': 'AdminSecret123'
+        }, follow_redirects=True)
+        assert b'Super Admin authentication requires logging in with your Email Address' in res_username.data
+
+def test_email_verification_and_password_reset_flow(app_instance, client):
+    from app.models import EmailLog
+    with app_instance.app_context():
+        u = User(username='new_student', email='new_student@test.com', first_name='New', last_name='Student', role=Role.STUDENT, is_verified=False)
+        u.set_password('StudentPass123')
+        db.session.add(u)
+        db.session.commit()
+
+        token = u.generate_verification_token()
+        db.session.commit()
+
+        # 1. Verify email using valid token
+        res_verify = client.get(f'/auth/verify-email/{token}')
+        assert res_verify.status_code == 200
+        assert b'Email Verified!' in res_verify.data
+        assert u.is_verified is True
+
+        # 2. Reusing used token fails
+        res_reuse = client.get(f'/auth/verify-email/{token}')
+        assert b'Verification Link Invalid' in res_reuse.data
+
+        # 3. Password reset request
+        reset_token = u.generate_password_reset_token()
+        db.session.commit()
+
+        res_reset = client.post(f'/auth/reset-password/{reset_token}', data={
+            'password': 'NewPassword123',
+            'confirm_password': 'NewPassword123'
+        }, follow_redirects=True)
+        assert res_reset.status_code == 200
+        assert u.check_password('NewPassword123') is True
+
+def test_teacher_parent_email_authorization(app_instance, client):
+    from flask_login import login_user
+    from app.models import User, Role, Class, Batch, Student, Teacher, TeacherAssignment, StudentParent, Parent, EmailLog, Subject
+    with app_instance.app_context():
+
+
+        cls = Class(name='Class 10', code='C10')
+        db.session.add(cls)
+        db.session.flush()
+
+        b1 = Batch(name='Batch Authorized', code='B10A', class_id=cls.id)
+        b2 = Batch(name='Batch Unauthorized', code='B10U', class_id=cls.id)
+        db.session.add_all([b1, b2])
+        db.session.flush()
+
+        # Teacher assigned ONLY to Batch 1
+        tu = User(username='t_auth', email='tauth@test.com', first_name='Auth', last_name='Teacher', role=Role.TEACHER)
+        tu.set_password('Pass123')
+        db.session.add(tu)
+        db.session.flush()
+        t = Teacher(user_id=tu.id, teacher_code='TCH-A')
+        db.session.add(t)
+        db.session.flush()
+
+        sub = Subject(name='Physics', code='PHY10', class_id=cls.id)
+        db.session.add(sub)
+        db.session.flush()
+
+        assign = TeacherAssignment(teacher_id=t.id, class_id=cls.id, batch_id=b1.id, subject_id=sub.id)
+        db.session.add(assign)
+
+
+        # Student 1 in Batch 1 (Authorized)
+        u_s1 = User(username='s_auth', email='s1@test.com', first_name='S1', last_name='Auth', role=Role.STUDENT)
+        u_s1.set_password('Pass123')
+        u_p1 = User(username='p_auth', email='p1@test.com', first_name='P1', last_name='Auth', role=Role.PARENT)
+        u_p1.set_password('Pass123')
+        db.session.add_all([u_s1, u_p1])
+        db.session.flush()
+
+        st1 = Student(user_id=u_s1.id, student_code='STU-A1', batch_id=b1.id)
+        p1 = Parent(user_id=u_p1.id)
+        db.session.add_all([st1, p1])
+        db.session.flush()
+
+        sp1 = StudentParent(student_id=st1.id, parent_id=p1.id, relationship='father')
+        db.session.add(sp1)
+
+        # Student 2 in Batch 2 (Unauthorized)
+        u_s2 = User(username='s_unauth', email='s2@test.com', first_name='S2', last_name='Unauth', role=Role.STUDENT)
+        u_s2.set_password('Pass123')
+        u_p2 = User(username='p_unauth', email='p2@test.com', first_name='P2', last_name='Unauth', role=Role.PARENT)
+        u_p2.set_password('Pass123')
+        db.session.add_all([u_s2, u_p2])
+        db.session.flush()
+
+        st2 = Student(user_id=u_s2.id, student_code='STU-U2', batch_id=b2.id)
+        p2 = Parent(user_id=u_p2.id)
+        db.session.add_all([st2, p2])
+        db.session.flush()
+
+        sp2 = StudentParent(student_id=st2.id, parent_id=p2.id, relationship='mother')
+        db.session.add(sp2)
+        db.session.commit()
+
+        # Log in as Teacher
+        with app_instance.test_request_context():
+            login_user(tu)
+
+            # 1. Emailing authorized student's parent (Student 1 / Parent 1) succeeds
+            res_auth = client.post('/teachers/email/compose', data={
+                'action': 'send',
+                'student_id': st1.id,
+                'parent_id': p1.id,
+                'template_key': 'academic_concern',
+                'subject': 'Academic Notice for Student 1',
+                'message': 'Good progress in class.'
+            }, follow_redirects=True)
+            assert res_auth.status_code == 200
+            assert b'successfully sent' in res_auth.data
+
+            # 2. Emailing unauthorized student's parent (Student 2 / Parent 2) is REJECTED
+            res_unauth = client.post('/teachers/email/compose', data={
+                'action': 'send',
+                'student_id': st2.id,
+                'parent_id': p2.id,
+                'template_key': 'academic_concern',
+                'subject': 'Unauthorized Notice Attempt',
+                'message': 'Attempting unauthorized send.'
+            }, follow_redirects=True)
+            assert b'Permission Denied: You are not authorized to email parents of this student' in res_unauth.data
+
+
 
 

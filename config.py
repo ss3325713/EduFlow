@@ -21,6 +21,17 @@ class Config:
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-eduflow-api-secret-key-2026')
     JWT_EXPIRATION_HOURS = 24
 
+    # Centralized SMTP & Mail Configuration
+    SMTP_SERVER = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+    SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
+    SMTP_USERNAME = os.environ.get('SMTP_USERNAME', 'noreply.vista@gmail.com')
+    SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+    SMTP_USE_TLS = os.environ.get('SMTP_USE_TLS', 'true').lower() in ('true', '1', 't', 'yes')
+
+    MAIL_FROM_ADDRESS = os.environ.get('MAIL_FROM_ADDRESS', 'noreply.vista@gmail.com')
+    MAIL_FROM_NAME = os.environ.get('MAIL_FROM_NAME', 'EduFlow Notifications')
+    APP_BASE_URL = os.environ.get('APP_BASE_URL', 'http://localhost:5000').rstrip('/')
+
 class DevelopmentConfig(Config):
     DEBUG = True
 
@@ -28,6 +39,9 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
+    SMTP_SERVER = 'localhost'
+    SMTP_PORT = 1025
+    SMTP_PASSWORD = 'test_password'
 
 class ProductionConfig(Config):
     DEBUG = False
@@ -38,3 +52,4 @@ config_by_name = {
     'production': ProductionConfig,
     'default': DevelopmentConfig
 }
+

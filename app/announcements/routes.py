@@ -72,7 +72,54 @@ def add():
         db.session.add(announcement)
         db.session.commit()
 
+        # ----------------------------------------------------
+        # Email Notification Integration for Announcements
+        # ----------------------------------------------------
+        try:
+            from app.models import User, Role, Student, Parent, EmailCategory
+            from app.services.email_service import EmailService
+
+            recipient_users = set()
+            query = User.query.filter_by(is_active=True)
+
+            if target_role == 'student':
+                query = query.filter_by(role=Role.STUDENT)
+            elif target_role == 'teacher':
+                query = query.filter_by(role=Role.TEACHER)
+            elif target_role == 'parent':
+                query = query.filter_by(role=Role.PARENT)
+
+            users_pool = query.all()
+
+            for u in users_pool:
+                if not u.email:
+                    continue
+                # Apply class/batch filtering
+                if batch_id and u.is_student() and u.student_profile and u.student_profile.batch_id != batch_id:
+                    continue
+                if class_id and u.is_student() and u.student_profile and u.student_profile.class_id != class_id:
+                    continue
+                recipient_users.add(u)
+
+            context = {
+                'announcement': announcement,
+                'date': datetime.utcnow().strftime('%B %d, %Y')
+            }
+
+            for recipient in recipient_users:
+                EmailService.send_email(
+                    to_email=recipient.email,
+                    subject=f"Notice: {announcement.title}",
+                    template_name='announcement_email',
+                    context=context,
+                    category=EmailCategory.INSTITUTIONAL,
+                    user_id=recipient.id
+                )
+        except Exception as err:
+            current_app.logger.error(f"Error sending announcement emails: {err}")
+
         flash(f'Announcement "{announcement.title}" published successfully.', 'success')
         return redirect(url_for('announcements.index'))
 
     return render_template('announcements/form.html', classes=classes, batches=batches)
+

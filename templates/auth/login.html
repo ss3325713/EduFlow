@@ -12,6 +12,20 @@
                 <p class="text-muted small">Sign in to your portal account</p>
             </div>
 
+            <!-- Role Selector Nav Tabs -->
+            <ul class="nav nav-pills nav-justified mb-4 p-1 bg-light rounded-3" id="loginTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-2 small fw-semibold {% if active_tab != 'super_admin' %}active{% endif %}" id="portal-tab" data-bs-toggle="pill" data-bs-target="#portal-login" type="button" role="tab">
+                        <i class="bi bi-people me-1"></i> Portal Login
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-2 small fw-semibold {% if active_tab == 'super_admin' %}active{% endif %}" id="superadmin-tab" data-bs-toggle="pill" data-bs-target="#superadmin-login" type="button" role="tab">
+                        <i class="bi bi-shield-lock me-1"></i> Super Admin
+                    </button>
+                </li>
+            </ul>
+
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -24,39 +38,89 @@
             {% endif %}
             {% endwith %}
 
-            <form method="POST" action="{{ url_for('auth.login') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="tab-content" id="loginTabsContent">
+                <!-- Portal Login (Students, Teachers, Parents, Staff) -->
+                <div class="tab-pane fade {% if active_tab != 'super_admin' %}show active{% endif %}" id="portal-login" role="tabpanel">
+                    <form method="POST" action="{{ url_for('auth.login') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="login_type" value="portal">
 
-                <div class="mb-3">
-                    <label class="form-label text-secondary fw-semibold small">Username or Email</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
-                        <input type="text" name="login_identifier" class="form-control border-start-0 ps-0" placeholder="admin, teacher, student, or email" value="{{ login_identifier or '' }}" required autofocus>
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label text-secondary fw-semibold small">Username or Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+                                <input type="text" name="login_identifier" class="form-control border-start-0 ps-0" placeholder="teacher, student, parent, or staff" value="{{ login_identifier or '' }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label text-secondary fw-semibold small mb-0">Password</label>
+                                <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small text-muted">Forgot?</a>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                                <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="••••••••" required>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remember" id="remember_portal" checked>
+                                <label class="form-check-label text-muted small" for="remember_portal">Remember me</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm" style="border-radius: 10px;">
+                            Sign In to Portal <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </form>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label text-secondary fw-semibold small">Password</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
-                        <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="••••••••" required>
+                <!-- Super Admin Login (Requires Email + Password) -->
+                <div class="tab-pane fade {% if active_tab == 'super_admin' %}show active{% endif %}" id="superadmin-login" role="tabpanel">
+                    <div class="alert alert-info py-2 px-3 border-0 small mb-3">
+                        <i class="bi bi-info-circle me-1"></i> Super Admin requires logging in with your registered <strong>Email Address</strong>.
                     </div>
-                </div>
+                    <form method="POST" action="{{ url_for('auth.login') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="login_type" value="super_admin">
 
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="remember" id="remember" checked>
-                        <label class="form-check-label text-muted small" for="remember">Remember me</label>
-                    </div>
-                </div>
+                        <div class="mb-3">
+                            <label class="form-label text-secondary fw-semibold small">Super Admin Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                                <input type="email" name="email" class="form-control border-start-0 ps-0" placeholder="admin@eduflow.academy" value="{{ email or '' }}" required>
+                            </div>
+                        </div>
 
-                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm" style="border-radius: 10px;">
-                    Sign In <i class="bi bi-arrow-right ms-1"></i>
-                </button>
-            </form>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label text-secondary fw-semibold small mb-0">Password</label>
+                                <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small text-muted">Forgot?</a>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                                <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="••••••••" required>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remember" id="remember_sa" checked>
+                                <label class="form-check-label text-muted small" for="remember_sa">Remember me</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-dark w-100 py-2.5 fw-semibold shadow-sm" style="border-radius: 10px;">
+                            Super Admin Sign In <i class="bi bi-shield-check ms-1"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
 
             <div class="mt-4 pt-3 border-top text-center text-muted small">
-                Demo Accounts: <code>admin</code> / <code>Admin@123</code>
+                Need help logging in? Contact your institution administrator.
             </div>
         </div>
     </div>

@@ -104,6 +104,12 @@
                     <i class="bi bi-megaphone-fill"></i>
                     <span>Announcements</span>
                 </a>
+                {% if current_user.is_teacher() or current_user.is_admin() %}
+                <a href="{{ url_for('teachers.compose_email') }}" class="nav-link-item {% if 'compose_email' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-envelope-paper-fill"></i>
+                    <span>Parent Email</span>
+                </a>
+                {% endif %}
 
                 {% if current_user.is_admin() %}
                 <div class="menu-category">Administration</div>
@@ -153,12 +159,14 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
                             <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="bi bi-person me-2"></i>My Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.email_preferences') }}"><i class="bi bi-envelope-gear me-2"></i>Email Preferences</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                         </ul>
                     </div>
                 </div>
             </header>
+
 
             <!-- Body Container -->
             <div class="main-body">

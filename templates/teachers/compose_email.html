@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Compose Teacher Email to Parent — EduFlow Academy{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1"><i class="bi bi-envelope-paper text-primary me-2"></i>Teacher &rarr; Parent Email Composer</h3>
+            <p class="text-muted small mb-0">Send direct academic notifications to authorized student parents.</p>
+        </div>
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i> Dashboard
+        </a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="row g-4">
+        <!-- Composer Form -->
+        <div class="col-12 col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('teachers.compose_email') }}" id="emailForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <!-- 1. Select Template -->
+                        <div class="mb-4">
+                            <label class="form-label text-secondary fw-semibold small">1. Select Notification Template</label>
+                            <select name="template_key" id="templateSelect" class="form-select border-1" onchange="applyTemplate()">
+                                {% for key, tpl in templates.items() %}
+                                <option value="{{ key }}" {% if selected_template == key %}selected{% endif %}>{{ tpl.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- 2. Select Authorized Student -->
+                        <div class="mb-3">
+                            <label class="form-label text-secondary fw-semibold small">2. Select Authorized Student</label>
+                            <select name="student_id" id="studentSelect" class="form-select border-1" required onchange="updateParents()">
+                                <option value="">-- Choose Student --</option>
+                                {% for student in students %}
+                                <option value="{{ student.id }}" {% if selected_student_id == student.id %}selected{% endif %}>
+                                    {{ student.full_name }} ({{ student.student_code }}) &bull; {{ student.batch.name if student.batch else 'No Batch' }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- 3. Select Linked Parent -->
+                        <div class="mb-4">
+                            <label class="form-label text-secondary fw-semibold small">3. Select Parent Recipient</label>
+                            <select name="parent_id" id="parentSelect" class="form-select border-1" required>
+                                <option value="">-- Choose Student First --</option>
+                            </select>
+                        </div>
+
+                        <!-- 4. Email Subject -->
+                        <div class="mb-3">
+                            <label class="form-label text-secondary fw-semibold small">4. Subject Line</label>
+                            <input type="text" name="subject" id="subjectInput" class="form-control" value="{{ preview_subject or '' }}" placeholder="Enter subject line..." required>
+                        </div>
+
+                        <!-- 5. Custom Message Content -->
+                        <div class="mb-4">
+                            <label class="form-label text-secondary fw-semibold small">5. Message Content</label>
+                            <textarea name="message" id="messageInput" class="form-control" rows="6" placeholder="Compose message content..." required>{{ custom_message or '' }}</textarea>
+                            <div class="form-text small text-muted">A professional signature block with your name, subject, and institution will be automatically appended.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <button type="submit" name="action" value="preview" class="btn btn-outline-secondary px-4 fw-semibold rounded-3">
+                                <i class="bi bi-eye me-1"></i> Preview Email
+                            </button>
+                            <button type="submit" name="action" value="send" class="btn btn-primary px-4 fw-semibold rounded-3 shadow-sm">
+                                <i class="bi bi-send me-1"></i> Send Email
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Sidebar -->
+        <div class="col-12 col-lg-5">
+            {% if preview and preview_context %}
+            <div class="card border-0 shadow-sm rounded-4 bg-light">
+                <div class="card-header bg-white border-bottom p-3">
+                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-eye me-1 text-primary"></i> Live Email Preview</h6>
+                </div>
+                <div class="card-body p-4 bg-white m-3 rounded-3 border">
+                    <div class="badge bg-primary-subtle text-primary mb-2">{{ preview_context.template_title }}</div>
+                    <h5 class="fw-bold text-dark mb-1">{{ preview_subject }}</h5>
+                    <hr class="my-3">
+                    <p>Dear <strong>{{ preview_context.parent_name }}</strong>,</p>
+                    <p class="small text-muted">Re: <strong>{{ preview_context.student_name }}</strong> (Batch: {{ preview_context.batch_name }}, Subject: {{ preview_context.subject }})</p>
+                    
+                    <div class="p-3 bg-light border-start border-4 border-primary rounded my-3 small">
+                        {{ preview_context.message | replace('\n', '<br>') | safe }}
+                    </div>
+
+                    <div class="pt-3 border-top small text-secondary">
+                        <p class="mb-0">With regards,<br>
+                        <strong>{{ preview_context.teacher_name }}</strong><br>
+                        {{ preview_context.teacher_designation }} &bull; {{ preview_context.subject }}<br>
+                        <strong>{{ preview_context.institute_name }}</strong></p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card border-0 shadow-sm rounded-4 bg-light text-center p-4">
+                <div class="card-body py-5 text-muted">
+                    <i class="bi bi-envelope-open display-4 opacity-50 mb-3 d-block"></i>
+                    <h6 class="fw-semibold">Email Preview Window</h6>
+                    <p class="small mb-0">Select a student, parent, and template, then click "Preview Email" to view the rendered message.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    const studentParentMap = {{ student_parent_map | tojson }};
+    const templatesData = {{ templates | tojson }};
+
+    function updateParents() {
+        const studentId = document.getElementById('studentSelect').value;
+        const parentSelect = document.getElementById('parentSelect');
+        parentSelect.innerHTML = '<option value="">-- Choose Parent --</option>';
+
+        if (studentId && studentParentMap[studentId]) {
+            studentParentMap[studentId].forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.name} (${p.relationship}) — ${p.email}`;
+                parentSelect.appendChild(opt);
+            });
+            if (studentParentMap[studentId].length > 0) {
+                parentSelect.selectedIndex = 1;
+            }
+        }
+    }
+
+    function applyTemplate() {
+        const tKey = document.getElementById('templateSelect').value;
+        if (templatesData[tKey]) {
+            document.getElementById('subjectInput').value = templatesData[tKey].subject;
+            document.getElementById('messageInput').value = templatesData[tKey].body;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateParents();
+        {% if selected_parent_id %}
+        document.getElementById('parentSelect').value = "{{ selected_parent_id }}";
+        {% endif %}
+    });
+</script>
+{% endblock %}

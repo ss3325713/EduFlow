@@ -49,7 +49,51 @@ class FeeService:
             user_id=recorded_by_user_id
         )
 
+        # ----------------------------------------------------
+        # Email Notification Integration for Fee Receipts
+        # ----------------------------------------------------
+        try:
+            from app.models import Student, InstituteSettings, EmailCategory
+            from app.services.email_service import EmailService
+
+            student = student_fee.student
+            institute = InstituteSettings.get_settings()
+            institute_name = institute.name if institute else 'EduFlow Academy'
+
+            context = {
+                'student_name': student.full_name if student else 'Student',
+                'parent_name': 'Parent / Guardian',
+                'institute_name': institute_name,
+                'receipt_number': receipt_number,
+                'amount_paid': amount_paid,
+                'payment_date': datetime.utcnow().strftime('%B %d, %Y'),
+                'payment_method': payment_method,
+                'remaining_balance': student_fee.balance
+            }
+
+            recipients = set()
+            if student and student.user and student.user.email:
+                recipients.add((student.user.email, student.user.id))
+
+            if student:
+                for link in student.parent_links:
+                    if link.parent and link.parent.user and link.parent.user.email:
+                        recipients.add((link.parent.user.email, link.parent.user.id))
+
+            for email_addr, u_id in recipients:
+                EmailService.send_email(
+                    to_email=email_addr,
+                    subject=f"Fee Payment Confirmation — Receipt #{receipt_number}",
+                    template_name='fee_receipt_email',
+                    context=context,
+                    category=EmailCategory.FINANCIAL,
+                    user_id=u_id
+                )
+        except Exception as err:
+            pass
+
         return payment
+
 
     @staticmethod
     def reverse_payment(payment_id, reason="Admin Reversal", user_id=None):

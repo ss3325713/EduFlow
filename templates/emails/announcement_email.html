@@ -1,0 +1,16 @@
+{% extends 'emails/base_email.html' %}
+
+{% block content %}
+<div class="badge" style="background: #fef3c7; color: #92400e;">Announcement</div>
+<h2 style="margin-top: 10px;">{{ announcement.title }}</h2>
+
+<div style="background-color: #ffffff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    {{ announcement.content | replace('\n', '<br>') | safe }}
+</div>
+
+<p style="font-size: 13px; color: #64748b;">
+    <strong>Target Audience:</strong> {{ announcement.target_role | capitalize }}<br>
+    <strong>Published By:</strong> {{ announcement.created_by_user.full_name if announcement.created_by_user else 'Administration' }}<br>
+    <strong>Date:</strong> {{ date }}
+</p>
+{% endblock %}

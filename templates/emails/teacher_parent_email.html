@@ -1,0 +1,20 @@
+{% extends 'emails/base_email.html' %}
+
+{% block content %}
+<div class="badge mb-3">{{ template_title or 'Faculty Notice' }}</div>
+<p>Dear <strong>{{ parent_name }}</strong>,</p>
+
+<p>Re: <strong>{{ student_name }}</strong> (Batch: {{ batch_name }}, Subject: {{ subject }})</p>
+
+<div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 15px 20px; margin: 20px 0; border-radius: 4px;">
+    {{ message | replace('\n', '<br>') | safe }}
+</div>
+
+<div class="signature">
+    <p>With regards,<br>
+    <strong>{{ teacher_name }}</strong><br>
+    <span style="color: #6b7280; font-size: 13px;">{{ teacher_designation }} &bull; {{ subject }}</span><br>
+    <strong>{{ institute_name }}</strong></p>
+    <p style="font-size: 11px; color: #9ca3af;">Sent via EduFlow Academy</p>
+</div>
+{% endblock %}

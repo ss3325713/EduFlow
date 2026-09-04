@@ -1,0 +1,19 @@
+{% extends 'emails/base_email.html' %}
+
+{% block content %}
+<div class="badge" style="background: #dcfce7; color: #166534;">Payment Confirmation</div>
+<h2 style="margin-top: 10px;">Fee Payment Receipt Summary</h2>
+
+<p>Dear <strong>{{ student_name }}</strong> / <strong>{{ parent_name }}</strong>,</p>
+<p>Thank you for your payment. We have successfully recorded your fee payment at {{ institute_name }}.</p>
+
+<div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <p style="margin: 5px 0;"><strong>Receipt Number:</strong> <code>{{ receipt_number }}</code></p>
+    <p style="margin: 5px 0;"><strong>Amount Paid:</strong> <span style="font-size: 18px; color: #16a34a; font-weight: bold;">{{ amount_paid | currency }}</span></p>
+    <p style="margin: 5px 0;"><strong>Payment Date:</strong> {{ payment_date }}</p>
+    <p style="margin: 5px 0;"><strong>Payment Method:</strong> {{ payment_method | upper }}</p>
+    <p style="margin: 5px 0;"><strong>Remaining Balance:</strong> {{ remaining_balance | currency }}</p>
+</div>
+
+<p style="font-size: 13px; color: #64748b;">You can view and download the full official receipt by logging into your portal account.</p>
+{% endblock %}

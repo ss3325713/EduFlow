@@ -1,0 +1,23 @@
+{% extends 'emails/base_email.html' %}
+
+{% block content %}
+<div class="badge" style="background: #fee2e2; color: #991b1b;">Schedule Update</div>
+<h2 style="margin-top: 10px;">Class Schedule Alert: {{ class_name }} ({{ batch_name }})</h2>
+
+<p>Dear Student / Parent,</p>
+<p>Please note an important update regarding your upcoming class schedule:</p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+    <tr><td style="padding: 8px; font-weight: bold; width: 140px; border-bottom: 1px solid #e2e8f0;">Subject:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">{{ subject_name }}</td></tr>
+    <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Faculty:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">{{ teacher_name }}</td></tr>
+    <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Day & Time:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">{{ day_of_week }} | {{ start_time }} - {{ end_time }}</td></tr>
+    <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Room Number:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">{{ room_number }}</td></tr>
+    <tr><td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Status:</td><td style="padding: 8px; border-bottom: 1px solid #e2e8f0; color: #dc2626; font-weight: bold;">{{ event_type }}</td></tr>
+</table>
+
+{% if reason %}
+<p><strong>Note / Reason:</strong> {{ reason }}</p>
+{% endif %}
+
+<p style="font-size: 13px; color: #64748b;">Please check your timetable portal for full details.</p>
+{% endblock %}

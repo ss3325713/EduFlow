@@ -113,7 +113,52 @@ def add():
 def delete(entry_id):
     entry = Timetable.query.get_or_404(entry_id)
     batch_id = entry.batch_id
+
+    # Collect class slot metadata before deleting
+    context = {
+        'class_name': entry.academic_class.name if entry.academic_class else 'Class',
+        'batch_name': entry.batch.name if entry.batch else 'Batch',
+        'subject_name': entry.subject.name if entry.subject else 'Subject',
+        'teacher_name': entry.teacher.full_name if entry.teacher else 'Faculty Member',
+        'day_of_week': entry.day_of_week,
+        'start_time': entry.start_time.strftime('%H:%M'),
+        'end_time': entry.end_time.strftime('%H:%M'),
+        'room_number': entry.room_number or 'Unspecified',
+        'event_type': 'Class Cancelled',
+        'reason': 'Scheduled slot has been cancelled by administration.'
+    }
+
     db.session.delete(entry)
     db.session.commit()
+
+    # ----------------------------------------------------
+    # Email Notification Integration for Class Cancellation
+    # ----------------------------------------------------
+    try:
+        from app.models import Student, EmailCategory
+        from app.services.email_service import EmailService
+
+        students = Student.query.filter_by(batch_id=batch_id).all()
+        recipients = set()
+        for st in students:
+            if st.user and st.user.email:
+                recipients.add((st.user.email, st.user.id))
+            for link in st.parent_links:
+                if link.parent and link.parent.user and link.parent.user.email:
+                    recipients.add((link.parent.user.email, link.parent.user.id))
+
+        for email_addr, u_id in recipients:
+            EmailService.send_email(
+                to_email=email_addr,
+                subject=f"Class Cancellation Alert: {context['subject_name']} ({context['batch_name']})",
+                template_name='class_rescheduled',
+                context=context,
+                category=EmailCategory.CLASS,
+                user_id=u_id
+            )
+    except Exception as err:
+        pass
+
     flash('Timetable slot deleted.', 'info')
     return redirect(url_for('timetable.index', batch_id=batch_id))
+

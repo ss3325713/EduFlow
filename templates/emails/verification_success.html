@@ -1,0 +1,14 @@
+{% extends 'emails/base_email.html' %}
+
+{% block content %}
+<h2>Email Address Verified Successfully!</h2>
+<p>Hello <strong>{{ user.full_name }}</strong>,</p>
+<p>Your email address (<code>{{ user.email }}</code>) has been successfully verified.</p>
+<p>Your portal account is now active and ready for use.</p>
+
+<div style="text-align: center;">
+    <a href="{{ login_url }}" class="btn">Log In to Portal</a>
+</div>
+
+<p>Thank you,<br>The EduFlow Team</p>
+{% endblock %}
