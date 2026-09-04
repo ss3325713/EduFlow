@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Profile — {{ student.full_name }}{% endblock %}
+{% block header_title %}Student Profile{% endblock %}
+
+{% block content %}
+<!-- Student Header Card -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: var(--radius-lg);">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="user-avatar" style="width: 64px; height: 64px; font-size: 1.6rem;">
+                    {{ student.full_name[0] }}
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark mb-1">{{ student.full_name }}</h4>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span class="badge bg-primary-subtle text-primary border fw-semibold">{{ student.student_code }}</span>
+                        <span class="badge bg-light text-dark border">Class: {{ student.academic_class.name if student.academic_class else 'Unassigned' }}</span>
+                        <span class="badge bg-light text-dark border">Batch: {{ student.batch.name if student.batch else 'Unassigned' }}</span>
+                        <span class="badge-status {{ student.status }}">{{ student.status.title() }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                {% if current_user.is_admin() %}
+                <a href="{{ url_for('students.edit', student_id=student.id) }}" class="btn btn-outline-primary btn-sm fw-semibold"><i class="bi bi-pencil me-1"></i> Edit Details</a>
+                <button type="button" class="btn btn-outline-secondary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#transferBatchModal"><i class="bi bi-arrow-left-right me-1"></i> Transfer Batch</button>
+
+                {% if student.user.is_active %}
+                <form method="POST" action="{{ url_for('students.disable', student_id=student.id) }}" class="d-inline" onsubmit="return confirm('Disable login access for {{ student.full_name }}? All records will be preserved.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-warning btn-sm fw-semibold" title="Block login while preserving records"><i class="bi bi-lock-fill me-1"></i> Disable Account</button>
+                </form>
+                {% else %}
+                <form method="POST" action="{{ url_for('students.enable', student_id=student.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-success btn-sm fw-semibold"><i class="bi bi-unlock-fill me-1"></i> Re-enable Account</button>
+                </form>
+                {% endif %}
+                {% endif %}
+
+                {% if current_user.is_teacher() and not current_user.is_admin() %}
+                {% if student.user.is_active %}
+                <button type="button" class="btn btn-warning btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#suspendStudentModal"><i class="bi bi-person-x me-1"></i> Suspend Student</button>
+                {% endif %}
+                <button type="button" class="btn btn-outline-danger btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#requestDeletionModal"><i class="bi bi-flag me-1"></i> Request Deletion</button>
+                {% endif %}
+
+                {% if current_user.is_super_admin() %}
+                <button type="button" class="btn btn-danger btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#deleteStudentModal"><i class="bi bi-trash me-1"></i> Permanent Delete</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom pt-3 px-4">
+        <ul class="nav nav-tabs card-header-tabs border-0">
+            <li class="nav-item">
+                <a href="{{ url_for('students.view', student_id=student.id, tab='overview') }}" class="nav-link {% if active_tab == 'overview' %}active{% endif %} fw-semibold">Overview</a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('students.view', student_id=student.id, tab='attendance') }}" class="nav-link {% if active_tab == 'attendance' %}active{% endif %} fw-semibold">Attendance Log</a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('students.view', student_id=student.id, tab='fees') }}" class="nav-link {% if active_tab == 'fees' %}active{% endif %} fw-semibold">Fee Record</a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('students.view', student_id=student.id, tab='exams') }}" class="nav-link {% if active_tab == 'exams' %}active{% endif %} fw-semibold">Exam Scores</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="card-body p-4">
+        {% if active_tab == 'overview' %}
+        <div class="row g-4">
+            <div class="col-md-6">
+                <h6 class="fw-bold text-dark mb-3">Contact & Personal Details</h6>
+                <table class="table table-borderless table-sm">
+                    <tr><td class="text-secondary w-35">Email:</td><td class="fw-medium">{{ student.email }}</td></tr>
+                    <tr><td class="text-secondary">Mobile:</td><td class="fw-medium">{{ student.mobile or 'N/A' }}</td></tr>
+                    <tr><td class="text-secondary">Gender / DOB:</td><td class="fw-medium">{{ student.gender or 'N/A' }} / {{ student.dob or 'N/A' }}</td></tr>
+                    <tr><td class="text-secondary">Parent Name:</td><td class="fw-medium">{{ student.parent_name or 'N/A' }}</td></tr>
+                    <tr><td class="text-secondary">Parent Mobile:</td><td class="fw-medium">{{ student.parent_mobile or 'N/A' }}</td></tr>
+                    <tr><td class="text-secondary">Address:</td><td class="fw-medium">{{ student.address or 'N/A' }}</td></tr>
+                </table>
+            </div>
+
+            <div class="col-md-6">
+                <h6 class="fw-bold text-dark mb-3">Academic Summary</h6>
+                <div class="p-3 bg-light rounded mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-secondary small fw-semibold">Attendance Rate</span>
+                        <span class="fw-bold text-primary">{{ student.attendance_percentage }}%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ student.attendance_percentage }}%"></div>
+                    </div>
+                </div>
+
+                {% if fee_record %}
+                <div class="p-3 bg-light rounded">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-secondary small fw-semibold">Fee Status</div>
+                            <div class="fw-bold text-dark">{{ fee_record.total_paid | currency }} paid of {{ fee_record.total_payable | currency }}</div>
+                        </div>
+                        <span class="badge-status {{ fee_record.status }}">{{ fee_record.status.title() }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% elif active_tab == 'attendance' %}
+        <div class="table-responsive">
+            <table class="table table-custom">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Batch</th>
+                        <th>Status</th>
+                        <th>Marked By</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in attendance_records %}
+                    <tr>
+                        <td class="fw-semibold">{{ r.date }}</td>
+                        <td>{{ r.batch.name if r.batch else '' }}</td>
+                        <td><span class="badge-status {{ r.status }}">{{ r.status.title() }}</span></td>
+                        <td>{{ r.marked_by_teacher.full_name if r.marked_by_teacher else 'Admin' }}</td>
+                        <td class="text-muted small">{{ r.remarks or '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center text-muted py-3">No attendance records logged</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% elif active_tab == 'fees' %}
+        {% if fee_record %}
+        <div class="mb-4 p-3 bg-light rounded d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="fw-bold text-dark mb-1">Assigned Structure: {{ fee_record.fee_structure.name if fee_record.fee_structure else 'Custom Package' }}</h6>
+                <span class="text-muted small">Total Payable: {{ fee_record.total_payable | currency }} | Paid: {{ fee_record.total_paid | currency }} | Balance: {{ fee_record.balance | currency }}</span>
+            </div>
+            {% if current_user.is_admin() and fee_record.balance > 0 %}
+            <a href="{{ url_for('fees.collect', student_fee_id=fee_record.id) }}" class="btn btn-success fw-semibold"><i class="bi bi-cash me-1"></i> Collect Payment</a>
+            {% endif %}
+        </div>
+
+        <h6 class="fw-bold text-dark mb-3">Payment History</h6>
+        <div class="table-responsive">
+            <table class="table table-custom">
+                <thead>
+                    <tr>
+                        <th>Receipt No</th>
+                        <th>Date</th>
+                        <th>Amount Paid</th>
+                        <th>Method</th>
+                        <th>Recorded By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in fee_record.payments %}
+                    <tr>
+                        <td class="fw-semibold"><a href="{{ url_for('fees.receipt', payment_id=p.id) }}">{{ p.receipt_number }}</a></td>
+                        <td>{{ p.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="fw-bold text-success">{{ p.amount_paid | currency }}</td>
+                        <td><span class="badge bg-light text-dark border text-uppercase">{{ p.payment_method }}</span></td>
+                        <td>{{ p.recorded_by_user.full_name if p.recorded_by_user else 'Admin' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center text-muted py-3">No payment records found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted py-3">No fee structure linked to student.</p>
+        {% endif %}
+
+        {% elif active_tab == 'exams' %}
+        <div class="table-responsive">
+            <table class="table table-custom">
+                <thead>
+                    <tr>
+                        <th>Exam Title</th>
+                        <th>Subject</th>
+                        <th>Score</th>
+                        <th>Percentage</th>
+                        <th>Grade</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in marks %}
+                    <tr>
+                        <td class="fw-semibold">{{ m.exam.title if m.exam else '' }}</td>
+                        <td>{{ m.subject.name if m.subject else '' }}</td>
+                        <td class="fw-bold">{{ m.marks_obtained }} / {{ m.max_marks }}</td>
+                        <td>{{ m.percentage }}%</td>
+                        <td><span class="badge bg-primary">{{ m.grade }}</span></td>
+                        <td>
+                            {% if m.exam %}
+                            <a href="{{ url_for('exams.student_report', exam_id=m.exam.id, student_id=student.id) }}" class="btn btn-sm btn-outline-primary fw-semibold"><i class="bi bi-file-earmark-bar-graph me-1"></i> Report Card</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-center text-muted py-3">No exam results recorded</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Super Admin Delete Modal -->
+{% if current_user.is_super_admin() %}
+<div class="modal fade" id="deleteStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content text-start">
+            <form method="POST" action="{{ url_for('students.delete', student_id=student.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Permanent Account Deletion</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-wrap">
+                    {% if student.user.is_active %}
+                    <div class="alert alert-warning border mb-3">
+                        <i class="bi bi-shield-lock-fill me-2"></i><strong>Institutional Policy Protection:</strong>
+                        Active student accounts cannot be permanently deleted directly. Please <strong>disable / block login</strong> first. Once disabled, Super Admin can purge the record permanently if required.
+                    </div>
+                    <p class="text-dark small mb-0">To soft-delete/block access, click <strong>Cancel</strong> and click the <strong>Disable Account</strong> button in the header bar.</p>
+                    {% else %}
+                    <p class="text-dark fw-bold mb-2">Are you sure you want to PERMANENTLY PURGE student account "{{ student.full_name }}" ({{ student.student_code }})?</p>
+                    <div class="alert alert-danger border mb-0 small">
+                        <strong>Warning:</strong> This account is currently disabled/suspended. Permanent deletion will purge all associated profile, grade, and attendance records from the database. This action CANNOT be undone.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    {% if not student.user.is_active %}
+                    <button type="submit" class="btn btn-danger fw-semibold">Yes, Permanently Purge Account</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Direct Teacher Suspension Modal -->
+{% if current_user.is_teacher() %}
+<div class="modal fade" id="suspendStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content text-start">
+            <form method="POST" action="{{ url_for('students.suspend', student_id=student.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-person-x-fill me-2"></i>Suspend Student Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-wrap">
+                    <p class="text-dark small mb-2">Teachers are directly permitted to suspend student accounts. Please provide the reason below. An automated notification will be sent to Super Admin.</p>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold small">Reason for Suspension *</label>
+                        <textarea name="reason" class="form-control" rows="3" placeholder="Specify behavioral or administrative reason..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning fw-semibold">Suspend & Notify Super Admin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Teacher Request Deletion Modal -->
+<div class="modal fade" id="requestDeletionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content text-start">
+            <form method="POST" action="{{ url_for('students.request_action', student_id=student.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="request_type" value="deletion">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-flag-fill me-2 text-danger"></i>Request Student Account Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-wrap">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold small">Reason / Justification for Deletion *</label>
+                        <textarea name="reason" class="form-control" rows="3" placeholder="Provide justification for Super Admin review..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger fw-semibold">Submit Deletion Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Transfer Batch Modal -->
+{% if current_user.is_admin() %}
+<div class="modal fade" id="transferBatchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('students.transfer_batch', student_id=student.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Transfer Batch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Current Batch: <strong>{{ student.batch.name if student.batch else 'Unassigned' }}</strong></p>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold small">Target New Batch</label>
+                        <select name="new_batch_id" class="form-select" required>
+                            <option value="">Select Target Batch</option>
+                            {% for b in all_batches %}
+                            <option value="{{ b.id }}" {% if student.batch_id == b.id %}selected{% endif %}>{{ b.name }} ({{ b.academic_class.name if b.academic_class else '' }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-semibold">Transfer Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

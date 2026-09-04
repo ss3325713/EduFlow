@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Issue Homework — {{ super() }}{% endblock %}
+{% block header_title %}Issue New Homework Assignment{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('assignments.add') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label class="form-label text-secondary fw-semibold small">Homework Title *</label>
+                            <input type="text" name="title" class="form-control" placeholder="e.g. Chapter 4 Practice Problems & Numerical Setup" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Class *</label>
+                            <select name="class_id" class="form-select" required>
+                                <option value="">Select Class</option>
+                                {% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Batch *</label>
+                            <select name="batch_id" class="form-select" required>
+                                <option value="">Select Batch</option>
+                                {% for b in batches %}
+                                <option value="{{ b.id }}" data-class-id="{{ b.class_id }}">{{ b.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Subject *</label>
+                            <select name="subject_id" class="form-select" required>
+                                <option value="">Select Subject</option>
+                                {% for s in subjects %}
+                                <option value="{{ s.id }}" data-class-id="{{ s.class_id }}">{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Due Submission Date *</label>
+                            <input type="date" name="due_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Attach File (PDF, Word, Doc)</label>
+                            <input type="file" name="attachment" class="form-control">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-secondary fw-semibold small">Instructions & Problem Details</label>
+                            <textarea name="description" class="form-control" rows="4" placeholder="Detailed assignment instructions..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('assignments.index') }}" class="btn btn-outline-secondary px-4 fw-semibold">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">Issue Homework</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const classSelect = document.querySelector('select[name="class_id"]');
+    const batchSelect = document.querySelector('select[name="batch_id"]');
+    const subjectSelect = document.querySelector('select[name="subject_id"]');
+
+    function filterOptions() {
+        const selectedClassId = classSelect.value;
+
+        // Filter batches
+        Array.from(batchSelect.options).forEach(opt => {
+            if (!opt.value) return;
+            const classId = opt.getAttribute('data-class-id');
+            if (!selectedClassId || classId === selectedClassId) {
+                opt.style.display = '';
+                opt.disabled = false;
+            } else {
+                opt.style.display = 'none';
+                opt.disabled = true;
+            }
+        });
+
+        // Filter subjects
+        Array.from(subjectSelect.options).forEach(opt => {
+            if (!opt.value) return;
+            const classId = opt.getAttribute('data-class-id');
+            if (!selectedClassId || classId === selectedClassId) {
+                opt.style.display = '';
+                opt.disabled = false;
+            } else {
+                opt.style.display = 'none';
+                opt.disabled = true;
+            }
+        });
+
+        if (batchSelect.selectedOptions[0] && batchSelect.selectedOptions[0].disabled) {
+            batchSelect.value = '';
+        }
+        if (subjectSelect.selectedOptions[0] && subjectSelect.selectedOptions[0].disabled) {
+            subjectSelect.value = '';
+        }
+    }
+
+    if (classSelect) {
+        classSelect.addEventListener('change', filterOptions);
+        filterOptions();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Fee Structures — {{ super() }}{% endblock %}
+{% block header_title %}Fee Structure Configurations{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-3">Create Fee Structure</h5>
+                <form method="POST" action="{{ url_for('fees.structures') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold small">Package Name *</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Class 11 Science Standard" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold small">Target Class *</label>
+                        <select name="class_id" class="form-select" required>
+                            <option value="">Select Class</option>
+                            {% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-secondary fw-semibold small">Admission Fee ({{ institute_settings.currency if institute_settings else '$' }})</label>
+                            <input type="number" step="0.01" name="admission_fee" class="form-control" value="0.0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-secondary fw-semibold small">Course Fee ({{ institute_settings.currency if institute_settings else '$' }})</label>
+                            <input type="number" step="0.01" name="course_fee" class="form-control" value="0.0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-secondary fw-semibold small">Monthly Fee ({{ institute_settings.currency if institute_settings else '$' }})</label>
+                            <input type="number" step="0.01" name="monthly_fee" class="form-control" value="0.0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-secondary fw-semibold small">Exam Fee ({{ institute_settings.currency if institute_settings else '$' }})</label>
+                            <input type="number" step="0.01" name="exam_fee" class="form-control" value="0.0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-secondary fw-semibold small">Other Charges ({{ institute_settings.currency if institute_settings else '$' }})</label>
+                            <input type="number" step="0.01" name="other_charges" class="form-control" value="0.0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-secondary fw-semibold small">Discount ({{ institute_settings.currency if institute_settings else '$' }})</label>
+                            <input type="number" step="0.01" name="discount_amount" class="form-control" value="0.0">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold">Save Fee Structure</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="table-card">
+            <div class="p-3 border-bottom">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-list-check me-2 text-primary"></i>Configured Fee Structures</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom mb-0">
+                    <thead>
+                        <tr>
+                            <th>Package Name</th>
+                            <th>Class</th>
+                            <th>Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fs in structures %}
+                        <tr>
+                            <td class="fw-bold text-dark">{{ fs.name }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ fs.academic_class.name if fs.academic_class else '' }}</span></td>
+                            <td class="fw-bold text-success">{{ fs.total_calculated_amount | currency }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">No fee structures configured yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

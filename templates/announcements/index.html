@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Announcements — {{ super() }}{% endblock %}
+{% block header_title %}Announcements & Notice Board{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-megaphone-fill me-2 text-primary"></i>Official Notices</h5>
+    {% if current_user.is_admin() or current_user.is_teacher() %}
+    <a href="{{ url_for('announcements.add') }}" class="btn btn-primary btn-sm fw-semibold shadow-sm"><i class="bi bi-plus-lg me-1"></i> Post Announcement</a>
+    {% endif %}
+</div>
+
+<div class="row g-4">
+    {% for a in announcements %}
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="d-flex gap-1 flex-wrap">
+                        <span class="badge {% if a.priority == 'urgent' %}bg-danger{% elif a.priority == 'high' %}bg-warning text-dark{% else %}bg-primary{% endif %} text-uppercase">
+                            {{ a.priority }} Priority
+                        </span>
+                        {% if a.batch %}
+                        <span class="badge bg-info-subtle text-info border">{{ a.batch.name }}</span>
+                        {% elif a.academic_class %}
+                        <span class="badge bg-light text-dark border">{{ a.academic_class.name }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="text-muted small">{{ a.publish_date.strftime('%b %d, %Y') if a.publish_date else '' }}</span>
+                </div>
+
+                <h5 class="fw-bold text-dark mb-2">{{ a.title }}</h5>
+                <p class="text-secondary small mb-3" style="white-space: pre-line;">{{ a.content }}</p>
+
+                <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-auto text-muted small">
+                    <span>Target: <strong class="text-dark">{{ a.target_role.title() }}s</strong></span>
+                    <span>Posted by: <strong>{{ a.created_by_user.full_name if a.created_by_user else 'Faculty' }}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center text-muted py-5">No active announcements on the notice board.</div>
+    {% endfor %}
+</div>
+{% endblock %}

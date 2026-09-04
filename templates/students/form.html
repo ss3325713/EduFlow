@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'Edit Student' if student else 'Register Student' }} — {{ super() }}{% endblock %}
+{% block header_title %}{{ 'Edit Student' if student else 'Register New Student' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('students.edit', student_id=student.id) if student else url_for('students.add') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <h5 class="fw-bold text-dark mb-3">Account & Login Credentials</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">First Name *</label>
+                            <input type="text" name="first_name" class="form-control" value="{{ student.user.first_name if student else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Last Name *</label>
+                            <input type="text" name="last_name" class="form-control" value="{{ student.user.last_name if student else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Username *</label>
+                            <input type="text" name="username" class="form-control" value="{{ student.user.username if student else '' }}" {% if student %}readonly{% endif %} required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Email Address *</label>
+                            <input type="email" name="email" class="form-control" value="{{ student.user.email if student else '' }}" required>
+                        </div>
+                        {% if not student %}
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Initial Password</label>
+                            <input type="password" name="password" class="form-control" placeholder="Default: Student@123">
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-3">Personal & Contact Details</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Date of Birth</label>
+                            <input type="date" name="dob" class="form-control" value="{{ student.dob if student and student.dob else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Gender</label>
+                            <select name="gender" class="form-select">
+                                <option value="Male" {% if student and student.gender == 'Male' %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if student and student.gender == 'Female' %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if student and student.gender == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Student Mobile</label>
+                            <input type="text" name="mobile" class="form-control" value="{{ student.mobile if student else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Parent / Guardian Name</label>
+                            <input type="text" name="parent_name" class="form-control" value="{{ student.parent_name if student else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Parent Mobile</label>
+                            <input type="text" name="parent_mobile" class="form-control" value="{{ student.parent_mobile if student else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-secondary fw-semibold small">Residential Address</label>
+                            <textarea name="address" class="form-control" rows="2">{{ student.address if student else '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-3">Academic & Batch Enrollment</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Assigned Class</label>
+                            <select name="class_id" class="form-select">
+                                <option value="">Select Class</option>
+                                {% for c in classes %}
+                                <option value="{{ c.id }}" {% if student and student.class_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Assigned Batch</label>
+                            <select name="batch_id" class="form-select">
+                                <option value="">Select Batch</option>
+                                {% for b in batches %}
+                                <option value="{{ b.id }}" data-class-id="{{ b.class_id }}" {% if student and student.batch_id == b.id %}selected{% endif %}>{{ b.name }} (Cap: {{ b.current_student_count }}/{{ b.max_capacity }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Roll Number</label>
+                            <input type="text" name="roll_number" class="form-control" value="{{ student.roll_number if student else '' }}" placeholder="e.g. 101">
+                        </div>
+                        {% if not student and fee_structures %}
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Initial Fee Structure Package</label>
+                            <select name="fee_structure_id" class="form-select">
+                                <option value="">Select Fee Structure</option>
+                                {% for fs in fee_structures %}
+                                <option value="{{ fs.id }}">{{ fs.name }} ({{ fs.total_calculated_amount | currency }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        {% if show_override %}
+                        <div class="col-12">
+                            <div class="form-check text-warning fw-semibold">
+                                <input class="form-check-input" type="checkbox" name="override_capacity" id="override_capacity">
+                                <label class="form-check-label" for="override_capacity">
+                                    Override Batch Capacity (Force registration into full batch)
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('students.index') }}" class="btn btn-outline-secondary px-4 fw-semibold">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">{{ 'Save Changes' if student else 'Register Student' }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

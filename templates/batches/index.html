@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Batch Management — {{ super() }}{% endblock %}
+{% block header_title %}Batch Directory{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-collection-fill me-2 text-primary"></i>Active Batches</h5>
+        {% if current_user.is_admin() %}
+        <a href="{{ url_for('batches.add') }}" class="btn btn-primary btn-sm fw-semibold shadow-sm"><i class="bi bi-plus-lg me-1"></i> Create Batch</a>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Batch Name</th>
+                    <th>Class</th>
+                    <th>Capacity</th>
+                    <th>Schedule</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in batches %}
+                <tr>
+                    <td class="fw-semibold text-primary">{{ b.code }}</td>
+                    <td class="fw-bold text-dark">
+                        <a href="{{ url_for('batches.view', batch_id=b.id) }}" class="text-decoration-none text-dark">{{ b.name }}</a>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ b.academic_class.name if b.academic_class else '' }}</span></td>
+                    <td>
+                        <span class="badge {% if b.is_full %}bg-danger{% else %}bg-primary-subtle text-primary{% endif %}">
+                            {{ b.current_student_count }} / {{ b.max_capacity }} {% if b.is_full %}(Full){% endif %}
+                        </span>
+                    </td>
+                    <td class="text-muted small">{{ b.schedule_description or 'TBD' }}</td>
+                    <td><span class="badge-status {{ b.status }}">{{ b.status.title() }}</span></td>
+                    <td>
+                        <a href="{{ url_for('batches.view', batch_id=b.id) }}" class="btn btn-sm btn-light border me-1"><i class="bi bi-eye"></i> View</a>
+                        {% if current_user.is_admin() %}
+                        <a href="{{ url_for('batches.edit', batch_id=b.id) }}" class="btn btn-sm btn-light border"><i class="bi bi-pencil"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-4">No batches created yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

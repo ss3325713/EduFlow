@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Institute Settings — {{ super() }}{% endblock %}
+{% block header_title %}Institute Branding & Configuration{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('settings.index') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <h5 class="fw-bold text-dark mb-3">General Information & Branding</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label class="form-label text-secondary fw-semibold small">Institute Name *</label>
+                            <input type="text" name="name" class="form-control" value="{{ settings.name }}" required>
+                            <div class="form-text text-muted">Currently set to "EduFlow Academy". Changeable anytime.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Academic Session</label>
+                            <input type="text" name="academic_session" class="form-control" value="{{ settings.academic_session }}">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-secondary fw-semibold small">Tagline / Motto</label>
+                            <input type="text" name="tagline" class="form-control" value="{{ settings.tagline or '' }}">
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-3">Contact & Location</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Contact Phone Number</label>
+                            <input type="text" name="phone" class="form-control" value="{{ settings.phone }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Contact Email Address</label>
+                            <input type="email" name="email" class="form-control" value="{{ settings.email }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-secondary fw-semibold small">Full Address</label>
+                            <textarea name="address" class="form-control" rows="2">{{ settings.address }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-globe me-2 text-primary"></i>Currency & Regional Settings</h5>
+                        <button type="button" id="autoDetectBtn" class="btn btn-outline-primary btn-sm fw-semibold shadow-sm">
+                            <i class="bi bi-geo-fill me-1"></i> Auto-Detect Location
+                        </button>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Select Country *</label>
+                            <select name="country" id="countrySelect" class="form-select fw-semibold" required>
+                                <option value="India" {% if settings.country == 'India' %}selected{% endif %}>India (₹ - INR)</option>
+                                <option value="United States" {% if settings.country == 'United States' or not settings.country %}selected{% endif %}>United States ($ - USD)</option>
+                                <option value="United Kingdom" {% if settings.country == 'United Kingdom' %}selected{% endif %}>United Kingdom (£ - GBP)</option>
+                                <option value="European Union" {% if settings.country == 'European Union' %}selected{% endif %}>European Union (€ - EUR)</option>
+                                <option value="Canada" {% if settings.country == 'Canada' %}selected{% endif %}>Canada ($ - CAD)</option>
+                                <option value="Australia" {% if settings.country == 'Australia' %}selected{% endif %}>Australia (A$ - AUD)</option>
+                                <option value="United Arab Emirates" {% if settings.country == 'United Arab Emirates' %}selected{% endif %}>United Arab Emirates (AED)</option>
+                                <option value="Saudi Arabia" {% if settings.country == 'Saudi Arabia' %}selected{% endif %}>Saudi Arabia (SAR)</option>
+                                <option value="Singapore" {% if settings.country == 'Singapore' %}selected{% endif %}>Singapore (S$ - SGD)</option>
+                                <option value="Malaysia" {% if settings.country == 'Malaysia' %}selected{% endif %}>Malaysia (RM - MYR)</option>
+                                <option value="Japan" {% if settings.country == 'Japan' %}selected{% endif %}>Japan (¥ - JPY)</option>
+                                <option value="China" {% if settings.country == 'China' %}selected{% endif %}>China (¥ - CNY)</option>
+                                <option value="Nigeria" {% if settings.country == 'Nigeria' %}selected{% endif %}>Nigeria (₦ - NGN)</option>
+                                <option value="Kenya" {% if settings.country == 'Kenya' %}selected{% endif %}>Kenya (KSh - KES)</option>
+                                <option value="South Africa" {% if settings.country == 'South Africa' %}selected{% endif %}>South Africa (R - ZAR)</option>
+                                <option value="Brazil" {% if settings.country == 'Brazil' %}selected{% endif %}>Brazil (R$ - BRL)</option>
+                                <option value="Mexico" {% if settings.country == 'Mexico' %}selected{% endif %}>Mexico ($ - MXN)</option>
+                                <option value="Custom" {% if settings.country == 'Custom' %}selected{% endif %}>Custom / Other</option>
+                            </select>
+                            <div class="form-text text-muted">Selecting a country automatically configures currency symbol & timezone.</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Currency Symbol *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold" id="currencySymbolPreview">{{ settings.currency or '$' }}</span>
+                                <input type="text" name="currency" id="currencyInput" class="form-control fw-bold" value="{{ settings.currency or '$' }}" required>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">System Timezone *</label>
+                            <input type="text" name="timezone" id="timezoneInput" class="form-control fw-semibold" value="{{ settings.timezone or 'UTC' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold"><i class="bi bi-check2-circle me-1"></i> Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const countrySelect = document.getElementById('countrySelect');
+    const currencyInput = document.getElementById('currencyInput');
+    const currencyPreview = document.getElementById('currencySymbolPreview');
+    const timezoneInput = document.getElementById('timezoneInput');
+    const autoDetectBtn = document.getElementById('autoDetectBtn');
+
+    const countryMap = {
+        "India": { currency: "₹", timezone: "Asia/Kolkata" },
+        "United States": { currency: "$", timezone: "America/New_York" },
+        "United Kingdom": { currency: "£", timezone: "Europe/London" },
+        "European Union": { currency: "€", timezone: "Europe/Paris" },
+        "Canada": { currency: "$", timezone: "America/Toronto" },
+        "Australia": { currency: "A$", timezone: "Australia/Sydney" },
+        "United Arab Emirates": { currency: "AED", timezone: "Asia/Dubai" },
+        "Saudi Arabia": { currency: "SAR", timezone: "Asia/Riyadh" },
+        "Singapore": { currency: "S$", timezone: "Asia/Singapore" },
+        "Malaysia": { currency: "RM", timezone: "Asia/Kuala_Lumpur" },
+        "Japan": { currency: "¥", timezone: "Asia/Tokyo" },
+        "China": { currency: "¥", timezone: "Asia/Shanghai" },
+        "Nigeria": { currency: "₦", timezone: "Africa/Lagos" },
+        "Kenya": { currency: "KSh", timezone: "Africa/Nairobi" },
+        "South Africa": { currency: "R", timezone: "Africa/Johannesburg" },
+        "Brazil": { currency: "R$", timezone: "America/Sao_Paulo" },
+        "Mexico": { currency: "$", timezone: "America/Mexico_City" }
+    };
+
+    countrySelect.addEventListener('change', function() {
+        const country = this.value;
+        if (countryMap[country]) {
+            currencyInput.value = countryMap[country].currency;
+            timezoneInput.value = countryMap[country].timezone;
+            currencyPreview.textContent = countryMap[country].currency;
+        }
+    });
+
+    currencyInput.addEventListener('input', function() {
+        currencyPreview.textContent = this.value || '$';
+    });
+
+    if (autoDetectBtn) {
+        autoDetectBtn.addEventListener('click', function() {
+            try {
+                const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                if (userTz) {
+                    timezoneInput.value = userTz;
+                    if (userTz.includes('Kolkata') || userTz.includes('Calcutta') || userTz.includes('Asia/Colombo')) {
+                        countrySelect.value = 'India';
+                    } else if (userTz.includes('London')) {
+                        countrySelect.value = 'United Kingdom';
+                    } else if (userTz.includes('Paris') || userTz.includes('Berlin') || userTz.includes('Rome')) {
+                        countrySelect.value = 'European Union';
+                    } else if (userTz.includes('Tokyo')) {
+                        countrySelect.value = 'Japan';
+                    } else if (userTz.includes('Dubai')) {
+                        countrySelect.value = 'United Arab Emirates';
+                    } else if (userTz.includes('Singapore')) {
+                        countrySelect.value = 'Singapore';
+                    } else if (userTz.includes('Sydney') || userTz.includes('Melbourne')) {
+                        countrySelect.value = 'Australia';
+                    } else if (userTz.includes('America/')) {
+                        countrySelect.value = 'United States';
+                    }
+                    countrySelect.dispatchEvent(new Event('change'));
+                }
+            } catch (e) {
+                console.log('Auto detect error:', e);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

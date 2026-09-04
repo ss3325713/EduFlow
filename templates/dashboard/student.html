@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Portal — {{ super() }}{% endblock %}
+{% block header_title %}Student Portal{% endblock %}
+
+{% block content %}
+{% if stats.student %}
+<div class="row g-4 mb-4">
+    <!-- Profile Summary Card -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm p-3 h-100" style="border-radius: var(--radius-lg);">
+            <div class="text-center py-3">
+                <div class="user-avatar mx-auto mb-2" style="width: 64px; height: 64px; font-size: 1.5rem;">
+                    {{ stats.student.full_name[0] }}
+                </div>
+                <h5 class="fw-bold text-dark mb-1">{{ stats.student.full_name }}</h5>
+                <span class="badge bg-primary-subtle text-primary border mb-2">{{ stats.student.student_code }}</span>
+                <div class="text-muted small">
+                    <div><strong>Class:</strong> {{ stats.student.academic_class.name if stats.student.academic_class else 'Unassigned' }}</div>
+                    <div><strong>Batch:</strong> {{ stats.student.batch.name if stats.student.batch else 'Unassigned' }}</div>
+                    <div><strong>Roll No:</strong> {{ stats.student.roll_number or 'N/A' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance & Fee Status Cards -->
+    <div class="col-lg-8">
+        <div class="row g-3 h-100">
+            <div class="col-sm-6">
+                <div class="stat-card h-100 d-flex flex-column justify-content-center">
+                    <div class="stat-icon primary mb-2"><i class="bi bi-calendar-check-fill"></i></div>
+                    <div class="stat-value">{{ stats.attendance_percentage }}%</div>
+                    <div class="stat-label">Attendance Percentage</div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ stats.attendance_percentage }}%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="stat-card h-100 d-flex flex-column justify-content-center">
+                    <div class="stat-icon success mb-2"><i class="bi bi-wallet2"></i></div>
+                    <div class="stat-value">{{ (stats.student_fee.balance if stats.student_fee else 0.0) | currency }}</div>
+                    <div class="stat-label">Fee Balance Due</div>
+                    {% if stats.student_fee %}
+                    <span class="badge-status {{ stats.student_fee.status }} mt-2 w-auto me-auto">{{ stats.student_fee.status.title() }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs for Homework, Study Materials, Exams -->
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom pt-3 px-4">
+        <ul class="nav nav-tabs card-header-tabs border-0" id="studentTabs">
+            <li class="nav-item">
+                <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-homework"><i class="bi bi-journal-text me-1"></i> Active Homework</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-materials"><i class="bi bi-file-earmark-pdf me-1"></i> Study Materials</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-marks"><i class="bi bi-award me-1"></i> Examination Marks</button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="card-body p-4">
+        <div class="tab-content">
+            <!-- Homework Tab -->
+            <div class="tab-pane fade show active" id="tab-homework">
+                <div class="table-responsive">
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Title</th>
+                                <th>Due Date</th>
+                                <th>Attachment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hw in stats.homework_list %}
+                            <tr>
+                                <td class="fw-semibold">{{ hw.subject.name if hw.subject else '' }}</td>
+                                <td>{{ hw.title }}</td>
+                                <td class="text-danger fw-medium">{{ hw.due_date }}</td>
+                                <td>
+                                    {% if hw.attachment_filename %}
+                                    <a href="{{ url_for('assignments.download', filename=hw.attachment_filename) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> Download</a>
+                                    {% else %}
+                                    <span class="text-muted small">None</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted py-3">No active homework assigned</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Study Materials Tab -->
+            <div class="tab-pane fade" id="tab-materials">
+                <div class="table-responsive">
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Title</th>
+                                <th>Uploaded</th>
+                                <th>Download</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mat in stats.materials %}
+                            <tr>
+                                <td class="fw-semibold">{{ mat.subject.name if mat.subject else '' }}</td>
+                                <td>{{ mat.title }}</td>
+                                <td class="text-muted small">{{ mat.upload_date.strftime('%Y-%m-%d') if mat.upload_date else '' }}</td>
+                                <td>
+                                    <a href="{{ url_for('materials.download', material_id=mat.id) }}" class="btn btn-sm btn-primary"><i class="bi bi-download"></i> Download</a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted py-3">No study materials available</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Exam Marks Tab -->
+            <div class="tab-pane fade" id="tab-marks">
+                <div class="table-responsive">
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th>Exam Title</th>
+                                <th>Subject</th>
+                                <th>Marks Obtained</th>
+                                <th>Percentage</th>
+                                <th>Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mark in stats.marks %}
+                            <tr>
+                                <td class="fw-semibold">{{ mark.exam.title if mark.exam else '' }}</td>
+                                <td>{{ mark.subject.name if mark.subject else '' }}</td>
+                                <td class="fw-bold">{{ mark.marks_obtained }} / {{ mark.max_marks }}</td>
+                                <td>{{ mark.percentage }}%</td>
+                                <td><span class="badge bg-primary text-white">{{ mark.grade }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No exam scores released yet</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-warning">Student profile not linked to user account. Please contact system administrator.</div>
+{% endif %}
+{% endblock %}

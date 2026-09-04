@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Batch — {{ batch.name }}{% endblock %}
+{% block header_title %}Batch Details{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm mb-4" style="border-radius: var(--radius-lg);">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <h4 class="fw-bold text-dark mb-1">{{ batch.name }}</h4>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="badge bg-primary-subtle text-primary border">{{ batch.code }}</span>
+                    <span class="badge bg-light text-dark border">Class: {{ batch.academic_class.name if batch.academic_class else '' }}</span>
+                    <span class="badge {% if batch.is_full %}bg-danger{% else %}bg-success-subtle text-success{% endif %}">
+                        Enrolled: {{ batch.current_student_count }} / {{ batch.max_capacity }}
+                    </span>
+                    <span class="badge-status {{ batch.status }}">{{ batch.status.title() }}</span>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('attendance.mark', batch_id=batch.id) }}" class="btn btn-success btn-sm fw-semibold"><i class="bi bi-calendar-check me-1"></i> Attendance</a>
+                {% if current_user.is_admin() %}
+                <a href="{{ url_for('batches.edit', batch_id=batch.id) }}" class="btn btn-outline-primary btn-sm fw-semibold"><i class="bi bi-pencil me-1"></i> Edit Batch</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Enrolled Students -->
+    <div class="col-lg-8">
+        <div class="table-card">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>Enrolled Students ({{ students|length }})</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Student Name</th>
+                            <th>Roll No</th>
+                            <th>Attendance %</th>
+                            <th>Profile</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        <tr>
+                            <td class="fw-semibold text-primary">{{ s.student_code }}</td>
+                            <td class="fw-bold text-dark">{{ s.full_name }}</td>
+                            <td>{{ s.roll_number or 'N/A' }}</td>
+                            <td><span class="fw-bold">{{ s.attendance_percentage }}%</span></td>
+                            <td><a href="{{ url_for('students.view', student_id=s.id) }}" class="btn btn-sm btn-light border"><i class="bi bi-eye"></i> Profile</a></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-3">No students assigned to this batch.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Teachers -->
+    <div class="col-lg-4">
+        <div class="table-card">
+            <div class="p-3 border-bottom">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-person-badge me-2 text-info"></i>Faculty Teachers</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Teacher</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in assignments %}
+                        <tr>
+                            <td><span class="badge bg-light text-dark border">{{ a.subject.name if a.subject else '' }}</span></td>
+                            <td class="fw-semibold">{{ a.teacher.full_name if a.teacher else '' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="2" class="text-center text-muted py-3">No teachers assigned yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

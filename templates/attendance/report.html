@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Report — {{ super() }}{% endblock %}
+{% block header_title %}Batch Attendance Analysis{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3">
+        <form method="GET" action="{{ url_for('attendance.report') }}" class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <select name="batch_id" class="form-select" onchange="this.form.submit()">
+                    {% for b in batches %}
+                    <option value="{{ b.id }}" {% if selected_batch and selected_batch.id == b.id %}selected{% endif %}>{{ b.name }} ({{ b.academic_class.name if b.academic_class else '' }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100 fw-semibold">Generate Statistics</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Student Code</th>
+                    <th>Student Name</th>
+                    <th>Total Days</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Late</th>
+                    <th>Excused</th>
+                    <th>Attendance %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in student_stats %}
+                <tr>
+                    <td class="fw-semibold text-primary">{{ stat.student.student_code }}</td>
+                    <td class="fw-bold text-dark">{{ stat.student.full_name }}</td>
+                    <td>{{ stat.total }}</td>
+                    <td class="text-success fw-bold">{{ stat.present }}</td>
+                    <td class="text-danger fw-bold">{{ stat.absent }}</td>
+                    <td class="text-warning fw-bold">{{ stat.late }}</td>
+                    <td class="text-info fw-bold">{{ stat.excused }}</td>
+                    <td>
+                        <span class="badge {% if stat.percentage >= 75 %}bg-success{% elif stat.percentage >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                            {{ stat.percentage }}%
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-4">No attendance stats recorded for this batch.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

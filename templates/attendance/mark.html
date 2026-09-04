@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark Attendance — {{ super() }}{% endblock %}
+{% block header_title %}Attendance Management{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm mb-4" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3">
+        <form method="GET" action="{{ url_for('attendance.mark') }}" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <label class="form-label text-secondary fw-semibold small mb-1">Select Batch</label>
+                <select name="batch_id" class="form-select" onchange="this.form.submit()">
+                    {% for b in batches %}
+                    <option value="{{ b.id }}" {% if selected_batch and selected_batch.id == b.id %}selected{% endif %}>{{ b.name }} (Class: {{ b.academic_class.name if b.academic_class else '' }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-secondary fw-semibold small mb-1">Attendance Date</label>
+                <input type="date" name="date" class="form-control" value="{{ date_str }}" onchange="this.form.submit()">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <a href="{{ url_for('attendance.report', batch_id=selected_batch.id if selected_batch else 0) }}" class="btn btn-outline-primary w-100 fw-semibold mt-3 mt-md-0"><i class="bi bi-bar-chart me-1"></i> Attendance Report</a>
+            </div>
+        </form>
+    </div>
+
+    {% if selected_batch %}
+    <form method="POST" action="{{ url_for('attendance.mark', batch_id=selected_batch.id, date=date_str) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="card-body p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+            <div class="fw-bold text-dark">Batch: {{ selected_batch.name }} ({{ students|length }} Students)</div>
+            <button type="button" class="btn btn-sm btn-outline-success fw-semibold" id="btnMarkAllPresent"><i class="bi bi-check-all me-1"></i> Mark All Present</button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Student Name</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    {% set rec = existing_records.get(s.id) %}
+                    {% set current_status = rec.status if rec else 'present' %}
+                    <tr>
+                        <td class="fw-semibold text-primary">{{ s.student_code }}</td>
+                        <td class="fw-bold text-dark">{{ s.full_name }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                {% for val, label in statuses %}
+                                <input type="radio" class="btn-check" name="status_{{ s.id }}" id="st_{{ s.id }}_{{ val }}" value="{{ val }}" {% if current_status == val %}checked{% endif %}>
+                                <label class="btn btn-outline-secondary" for="st_{{ s.id }}_{{ val }}">{{ label }}</label>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td>
+                            <input type="text" name="remarks_{{ s.id }}" class="form-control form-control-sm" placeholder="Optional remark" value="{{ rec.remarks if rec and rec.remarks else '' }}">
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-center text-muted py-4">No active students enrolled in this batch.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if students %}
+        <div class="card-footer bg-white p-3 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm"><i class="bi bi-save me-1"></i> Save Attendance</button>
+        </div>
+        {% endif %}
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

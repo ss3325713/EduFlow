@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Login — {{ institute_settings.name if institute_settings else 'EduFlow Academy' }}{% endblock %}
+
+{% block auth_content %}
+<div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xl-4">
+    <div class="card border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+        <div class="card-body p-4 p-sm-5">
+            <div class="text-center mb-4">
+                <div class="brand-icon mx-auto mb-3" style="width: 54px; height: 54px; font-size: 1.8rem; border-radius: 14px;">E</div>
+                <h3 class="fw-bold text-dark mb-1">{{ institute_settings.name if institute_settings else 'EduFlow Academy' }}</h3>
+                <p class="text-muted small">Sign in to your portal account</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary fw-semibold small">Username or Email</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+                        <input type="text" name="login_identifier" class="form-control border-start-0 ps-0" placeholder="admin, teacher, student, or email" value="{{ login_identifier or '' }}" required autofocus>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary fw-semibold small">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                        <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="remember" id="remember" checked>
+                        <label class="form-check-label text-muted small" for="remember">Remember me</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm" style="border-radius: 10px;">
+                    Sign In <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </form>
+
+            <div class="mt-4 pt-3 border-top text-center text-muted small">
+                Demo Accounts: <code>admin</code> / <code>Admin@123</code>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

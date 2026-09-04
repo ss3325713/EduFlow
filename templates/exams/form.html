@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Examination — {{ super() }}{% endblock %}
+{% block header_title %}Schedule New Examination{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('exams.add') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Exam Title *</label>
+                            <input type="text" name="title" class="form-control" placeholder="e.g. Mid-Term Physics Evaluation" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Exam Type</label>
+                            <select name="exam_type" class="form-select">
+                                <option value="unit_test">Unit Test</option>
+                                <option value="midterm">Mid-Term Exam</option>
+                                <option value="final">Final Exam</option>
+                                <option value="mock">Mock Test</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Class *</label>
+                            <select name="class_id" class="form-select" required>
+                                <option value="">Select Class</option>
+                                {% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Batch *</label>
+                            <select name="batch_id" class="form-select" required>
+                                <option value="">Select Batch</option>
+                                {% for b in batches %}
+                                <option value="{{ b.id }}" data-class-id="{{ b.class_id }}">{{ b.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Exam Date *</label>
+                            <input type="date" name="exam_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Maximum Marks *</label>
+                            <input type="number" step="0.5" name="max_marks" class="form-control" value="100.0" required>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('exams.index') }}" class="btn btn-outline-secondary px-4 fw-semibold">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">Create Exam</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const classSelect = document.querySelector('select[name="class_id"]');
+    const batchSelect = document.querySelector('select[name="batch_id"]');
+
+    function filterOptions() {
+        const selectedClassId = classSelect.value;
+
+        Array.from(batchSelect.options).forEach(opt => {
+            if (!opt.value) return;
+            const classId = opt.getAttribute('data-class-id');
+            if (!selectedClassId || classId === selectedClassId) {
+                opt.style.display = '';
+                opt.disabled = false;
+            } else {
+                opt.style.display = 'none';
+                opt.disabled = true;
+            }
+        });
+
+        if (batchSelect.selectedOptions[0] && batchSelect.selectedOptions[0].disabled) {
+            batchSelect.value = '';
+        }
+    }
+
+    if (classSelect) {
+        classSelect.addEventListener('change', filterOptions);
+        filterOptions();
+    }
+});
+</script>
+{% endblock %}

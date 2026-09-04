@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Record Fee Payment — {{ super() }}{% endblock %}
+{% block header_title %}Record Fee Payment{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <!-- Student Summary Card -->
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="user-avatar" style="width: 52px; height: 52px; font-size: 1.3rem;">
+                        {{ student_fee.student.full_name[0] }}
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0">{{ student_fee.student.full_name }}</h5>
+                        <span class="badge bg-light text-dark border">{{ student_fee.student.student_code }}</span>
+                    </div>
+                </div>
+
+                <hr class="my-3">
+
+                <div class="row text-center g-2">
+                    <div class="col-4">
+                        <div class="text-muted small">Total Payable</div>
+                        <div class="fw-bold fs-6">{{ student_fee.total_payable | currency }}</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small">Total Paid</div>
+                        <div class="fw-bold text-success fs-6">{{ student_fee.total_paid | currency }}</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted small">Remaining Balance</div>
+                        <div class="fw-bold text-danger fs-6">{{ student_fee.balance | currency }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Input Form -->
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('fees.collect', student_fee_id=student_fee.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold small">Amount Paid ({{ institute_settings.currency if institute_settings else '$' }}) *</label>
+                        <input type="number" step="0.01" name="amount_paid" class="form-control form-control-lg font-monospace text-success fw-bold" value="{{ student_fee.balance }}" max="{{ student_fee.balance }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold small">Payment Method</label>
+                        <select name="payment_method" class="form-select">
+                            <option value="cash">Cash</option>
+                            <option value="bank_transfer">Bank Transfer / NEFT</option>
+                            <option value="upi">UPI / Mobile Payment</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-secondary fw-semibold small">Transaction Notes / Reference</label>
+                        <textarea name="transaction_notes" class="form-control" rows="2" placeholder="e.g. Bank Ref #9928120"></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('fees.index') }}" class="btn btn-outline-secondary px-4 fw-semibold">Cancel</a>
+                        <button type="submit" class="btn btn-success px-4 fw-semibold"><i class="bi bi-printer me-1"></i> Record & Print Receipt</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

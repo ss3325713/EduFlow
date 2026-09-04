@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Study Materials — {{ super() }}{% endblock %}
+{% block header_title %}Study Material Repository{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-file-earmark-pdf-fill me-2 text-primary"></i>Educational Resources & Notes</h5>
+        {% if current_user.is_admin() or current_user.is_teacher() %}
+        <a href="{{ url_for('materials.upload') }}" class="btn btn-primary btn-sm fw-semibold shadow-sm"><i class="bi bi-upload me-1"></i> Upload Resource</a>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Class / Batch</th>
+                    <th>Subject</th>
+                    <th>Format</th>
+                    <th>Uploaded By</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in materials %}
+                <tr>
+                    <td class="fw-bold text-dark">{{ m.title }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ m.batch.name if m.batch else '' }}</span></td>
+                    <td><span class="badge bg-primary-subtle text-primary">{{ m.subject.name if m.subject else '' }}</span></td>
+                    <td><span class="badge bg-danger-subtle text-danger text-uppercase">{{ m.file_type }}</span></td>
+                    <td>{{ m.teacher.full_name if m.teacher else '' }}</td>
+                    <td class="text-muted small">{{ m.upload_date.strftime('%Y-%m-%d') if m.upload_date else '' }}</td>
+                    <td>
+                        <a href="{{ url_for('materials.download', material_id=m.id) }}" class="btn btn-sm btn-primary fw-semibold"><i class="bi bi-download me-1"></i> Download</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-4">No study materials uploaded yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

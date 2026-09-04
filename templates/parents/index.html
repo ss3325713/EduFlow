@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Parent Accounts — {{ super() }}{% endblock %}
+{% block header_title %}Parent Accounts Directory{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-house-heart-fill me-2 text-primary"></i>Parent Accounts</h5>
+        <a href="{{ url_for('parents.add') }}" class="btn btn-primary btn-sm fw-semibold shadow-sm"><i class="bi bi-person-plus-fill me-1"></i> Register Parent</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Parent Name</th>
+                    <th>Username / Email</th>
+                    <th>Mobile</th>
+                    <th>Occupation</th>
+                    <th>Linked Children</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in parents %}
+                <tr>
+                    <td class="fw-bold text-dark">{{ p.full_name }}</td>
+                    <td class="text-muted small">{{ p.email }}</td>
+                    <td>{{ p.mobile or 'N/A' }}</td>
+                    <td>{{ p.occupation or 'N/A' }}</td>
+                    <td>
+                        {% for link in p.student_links %}
+                        <span class="badge bg-primary-subtle text-primary border mb-1 d-inline-flex align-items-center gap-1 me-1">
+                            {{ link.student.full_name }}
+                            {% if current_user.is_super_admin() or current_user.is_admin() %}
+                            <form method="POST" action="{{ url_for('parents.delink_student', parent_id=p.id, student_id=link.student_id) }}" class="d-inline" onsubmit="return confirm('Delink {{ link.student.full_name }} from {{ p.full_name }}?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn-close ms-1" style="font-size: 0.6rem;" title="Delink Child"></button>
+                            </form>
+                            {% endif %}
+                        </span>
+                        {% else %}
+                        <span class="text-muted small">No children linked</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#linkChildModal{{ p.id }}"><i class="bi bi-link-45deg"></i> Link Child</button>
+                        {% if current_user.is_super_admin() %}
+                        {% if p.user.is_active %}
+                        <form method="POST" action="{{ url_for('parents.disable', parent_id=p.id) }}" class="d-inline" onsubmit="return confirm('Disable login access for parent {{ p.full_name }}?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-warning ms-1" title="Disable Login / Soft Delete"><i class="bi bi-lock-fill"></i> Disable</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('parents.enable', parent_id=p.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success ms-1" title="Re-enable Login"><i class="bi bi-unlock-fill"></i> Enable</button>
+                        </form>
+                        {% endif %}
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-1" data-bs-toggle="modal" data-bs-target="#deleteParentModal{{ p.id }}"><i class="bi bi-trash"></i> Delete</button>
+                        {% endif %}
+
+                        <!-- Link Child Modal -->
+                        <div class="modal fade" id="linkChildModal{{ p.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="POST" action="{{ url_for('parents.link_student') }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="parent_id" value="{{ p.id }}">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title fw-bold">Link Child to {{ p.full_name }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label text-secondary fw-semibold small">Select Student</label>
+                                                <select name="student_id" class="form-select" required>
+                                                    <option value="">Select Student</option>
+                                                    {% for s in students %}<option value="{{ s.id }}">{{ s.full_name }} ({{ s.student_code }})</option>{% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-secondary fw-semibold small">Relationship</label>
+                                                <select name="relationship" class="form-select">
+                                                    <option value="father">Father</option>
+                                                    <option value="mother">Mother</option>
+                                                    <option value="guardian">Guardian</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary fw-semibold">Link Student</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if current_user.is_super_admin() %}
+                        <!-- Delete Parent Modal -->
+                        <div class="modal fade" id="deleteParentModal{{ p.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content text-start">
+                                    <form method="POST" action="{{ url_for('parents.delete', parent_id=p.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Permanent Account Deletion</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-wrap">
+                                            {% if p.user.is_active %}
+                                            <div class="alert alert-warning border mb-3">
+                                                <i class="bi bi-shield-lock-fill me-2"></i><strong>Institutional Policy Protection:</strong>
+                                                Active parent accounts cannot be permanently deleted directly. Please <strong>disable / block login</strong> first.
+                                            </div>
+                                            <p class="text-dark small mb-0">Click <strong>Disable</strong> button to block account login access while preserving student links.</p>
+                                            {% else %}
+                                            <p class="mb-2">Are you sure you want to PERMANENTLY PURGE parent account for <strong>{{ p.full_name }}</strong>?</p>
+                                            <div class="alert alert-danger mb-0 small">
+                                                <strong>Warning:</strong> This account is disabled. Permanent deletion will purge their login credentials and parent link records from the database.
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            {% if not p.user.is_active %}
+                                            <button type="submit" class="btn btn-danger fw-semibold">Yes, Permanently Purge Account</button>
+                                            {% endif %}
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No parent accounts created yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

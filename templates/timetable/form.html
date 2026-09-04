@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Schedule Slot — {{ super() }}{% endblock %}
+{% block header_title %}Schedule Timetable Slot{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('timetable.add') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Day of Week *</label>
+                            <select name="day_of_week" class="form-select" required>
+                                {% for day in days %}
+                                <option value="{{ day }}">{{ day }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">Start Time *</label>
+                            <input type="time" name="start_time" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-semibold small">End Time *</label>
+                            <input type="time" name="end_time" class="form-control" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Class *</label>
+                            <select name="class_id" class="form-select" required>
+                                <option value="">Select Class</option>
+                                {% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Batch *</label>
+                            <select name="batch_id" class="form-select" required>
+                                <option value="">Select Batch</option>
+                                {% for b in batches %}
+                                <option value="{{ b.id }}" data-class-id="{{ b.class_id }}">{{ b.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Subject *</label>
+                            <select name="subject_id" class="form-select" required>
+                                <option value="">Select Subject</option>
+                                {% for s in subjects %}
+                                <option value="{{ s.id }}" data-class-id="{{ s.class_id }}">{{ s.name }} ({{ s.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Teacher *</label>
+                            <select name="teacher_id" class="form-select" required>
+                                <option value="">Select Teacher</option>
+                                {% for t in teachers %}<option value="{{ t.id }}">{{ t.full_name }} ({{ t.teacher_code }})</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Room Number</label>
+                            <input type="text" name="room_number" class="form-control" value="Room 101">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('timetable.index') }}" class="btn btn-outline-secondary px-4 fw-semibold">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">Validate & Schedule Slot</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

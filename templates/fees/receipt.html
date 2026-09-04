@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Receipt #{{ payment.receipt_number }} — {{ super() }}{% endblock %}
+{% block header_title %}Payment Receipt{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 btn-no-print">
+    <a href="{{ url_for('fees.index') }}" class="btn btn-outline-secondary btn-sm fw-semibold"><i class="bi bi-arrow-left me-1"></i> Back to Fees Dashboard</a>
+    <button onclick="window.print()" class="btn btn-primary btn-sm fw-semibold shadow-sm"><i class="bi bi-printer me-1"></i> Print Official Receipt</button>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm printable-receipt p-4 p-sm-5" style="border-radius: var(--radius-lg); background: #ffffff;">
+            <!-- Receipt Header -->
+            <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="brand-icon" style="width: 42px; height: 42px; font-size: 1.4rem;">E</div>
+                        <h3 class="fw-bold text-dark mb-0">{{ institute_settings.name if institute_settings else 'EduFlow Academy' }}</h3>
+                    </div>
+                    <div class="text-muted small">
+                        <div>{{ institute_settings.address if institute_settings else '100 Learning Way, Suite 500' }}</div>
+                        <div>Phone: {{ institute_settings.phone if institute_settings else '+1 (800) 555-EDU1' }} | Email: {{ institute_settings.email if institute_settings else 'contact@eduflow.academy' }}</div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-success-subtle text-success fs-6 border border-success mb-2 px-3 py-1">FEE RECEIPT</span>
+                    <div class="fw-bold text-dark">Receipt #: {{ payment.receipt_number }}</div>
+                    <div class="text-muted small">Date: {{ payment.payment_date.strftime('%B %d, %Y - %H:%M') }}</div>
+                </div>
+            </div>
+
+            <!-- Student Info Block -->
+            <div class="row g-3 mb-4 p-3 bg-light rounded">
+                <div class="col-6">
+                    <div class="text-secondary small fw-semibold">Student Name</div>
+                    <div class="fw-bold text-dark">{{ student.full_name }}</div>
+                    <div class="text-muted small">Code: {{ student.student_code }}</div>
+                </div>
+                <div class="col-6 text-end">
+                    <div class="text-secondary small fw-semibold">Class / Batch</div>
+                    <div class="fw-bold text-dark">{{ student.academic_class.name if student.academic_class else '' }}</div>
+                    <div class="text-muted small">Batch: {{ student.batch.name if student.batch else '' }}</div>
+                </div>
+            </div>
+
+            <!-- Payment Details Table -->
+            <table class="table table-bordered mb-4">
+                <thead class="table-light">
+                    <tr>
+                        <th>Description</th>
+                        <th>Payment Method</th>
+                        <th class="text-end">Amount Paid</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="fw-bold">Fee Installment Payment</div>
+                            <div class="text-muted small">Structure: {{ payment.student_fee.fee_structure.name if payment.student_fee.fee_structure else 'Tuition Fee' }}</div>
+                            {% if payment.transaction_notes %}
+                            <div class="text-muted small">Note: {{ payment.transaction_notes }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-uppercase fw-semibold">{{ payment.payment_method }}</td>
+                        <td class="text-end fw-bold fs-5 text-success">{{ payment.amount_paid | currency }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Balance Summary -->
+            <div class="row mb-5">
+                <div class="col-md-6 offset-md-6">
+                    <div class="p-3 bg-light rounded">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-secondary small">Total Payable:</span>
+                            <span class="fw-semibold">{{ payment.student_fee.total_payable | currency }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-secondary small">Total Paid to Date:</span>
+                            <span class="fw-bold text-success">{{ payment.student_fee.total_paid | currency }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                            <span class="fw-bold">Remaining Balance:</span>
+                            <span class="fw-bold text-danger">{{ payment.student_fee.balance | currency }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signatures Footer -->
+            <div class="row pt-5 text-center mt-4">
+                <div class="col-6">
+                    <div class="border-top pt-2 text-muted small">Student / Guardian Signature</div>
+                </div>
+                <div class="col-6">
+                    <div class="border-top pt-2 text-muted small">Authorized Officer Signature ({{ payment.recorded_by_user.full_name if payment.recorded_by_user else 'Admin' }})</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

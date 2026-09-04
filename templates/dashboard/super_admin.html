@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Super Admin Dashboard — {{ super() }}{% endblock %}
+{% block header_title %}Executive Dashboard{% endblock %}
+
+{% block content %}
+<!-- Quick Actions Row -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+    <div>
+        <h4 class="fw-bold text-dark mb-0">Welcome back, {{ current_user.first_name }}!</h4>
+        <p class="text-muted small mb-0">Here is the real-time operational breakdown for {{ institute_settings.name if institute_settings else 'EduFlow Academy' }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('students.add') }}" class="btn btn-primary btn-sm fw-semibold shadow-sm"><i class="bi bi-person-plus-fill me-1"></i> Add Student</a>
+        <a href="{{ url_for('teachers.add') }}" class="btn btn-outline-primary btn-sm fw-semibold"><i class="bi bi-person-badge me-1"></i> Add Teacher</a>
+        <a href="{{ url_for('batches.add') }}" class="btn btn-outline-secondary btn-sm fw-semibold"><i class="bi bi-folder-plus me-1"></i> Create Batch</a>
+        <a href="{{ url_for('attendance.mark') }}" class="btn btn-success btn-sm fw-semibold text-white shadow-sm"><i class="bi bi-calendar-check me-1"></i> Mark Attendance</a>
+    </div>
+</div>
+
+<!-- Stat Cards Grid -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon primary mb-2"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-value">{{ stats.total_students }}</div>
+            <div class="stat-label">Total Students</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon success mb-2"><i class="bi bi-person-check-fill"></i></div>
+            <div class="stat-value">{{ stats.active_students }}</div>
+            <div class="stat-label">Active Students</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon info mb-2"><i class="bi bi-person-badge-fill"></i></div>
+            <div class="stat-value">{{ stats.active_teachers }}</div>
+            <div class="stat-label">Active Teachers</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon warning mb-2"><i class="bi bi-collection-fill"></i></div>
+            <div class="stat-value">{{ stats.active_batches }}</div>
+            <div class="stat-label">Active Batches</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon success mb-2"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-value">{{ (stats.monthly_collection or 0.0) | currency }}</div>
+            <div class="stat-label">Monthly Collection</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon primary mb-2"><i class="bi bi-pie-chart-fill"></i></div>
+            <div class="stat-value">{{ stats.today_att_percentage }}%</div>
+            <div class="stat-label">Today's Attendance</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: var(--radius-lg);">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold text-dark mb-0">Monthly Fee Collection Trend</h6>
+                <span class="badge bg-light text-muted border">Last 6 Months</span>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <canvas id="feeCollectionChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: var(--radius-lg);">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h6 class="fw-bold text-dark mb-0">Batch-wise Distribution</h6>
+            </div>
+            <div class="card-body px-4 pb-4 d-flex align-items-center justify-content-center">
+                <canvas id="batchDistributionChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Tables Row -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="table-card">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Admissions</h6>
+                <a href="{{ url_for('students.index') }}" class="btn btn-link btn-sm text-decoration-none">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Student</th>
+                            <th>Class</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in stats.recent_admissions %}
+                        <tr>
+                            <td class="fw-semibold">{{ s.student_code }}</td>
+                            <td>
+                                <a href="{{ url_for('students.view', student_id=s.id) }}" class="text-decoration-none text-dark fw-medium">{{ s.full_name }}</a>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ s.academic_class.name if s.academic_class else 'Unassigned' }}</span></td>
+                            <td class="text-muted small">{{ s.admission_date }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No recent admissions</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="table-card">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-receipt me-2 text-success"></i>Recent Fee Payments</h6>
+                <a href="{{ url_for('fees.index') }}" class="btn btn-link btn-sm text-decoration-none">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Receipt</th>
+                            <th>Student</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in stats.recent_payments %}
+                        <tr>
+                            <td class="fw-semibold">
+                                <a href="{{ url_for('fees.receipt', payment_id=p.id) }}" class="text-decoration-none">{{ p.receipt_number }}</a>
+                            </td>
+                            <td>{{ p.student_fee.student.full_name if (p.student_fee and p.student_fee.student) else 'Unknown' }}</td>
+                            <td class="fw-bold text-success">{{ p.amount_paid | currency }}</td>
+                            <td><span class="badge bg-light text-dark border text-uppercase">{{ p.payment_method }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No recent fee payments</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fee Collection Chart
+    const feeCtx = document.getElementById('feeCollectionChart').getContext('2d');
+    new Chart(feeCtx, {
+        type: 'line',
+        data: {
+            labels: {{ stats.fee_chart_labels | tojson }},
+            datasets: [{
+                label: 'Collection ($)',
+                data: {{ stats.fee_chart_data | tojson }},
+                borderColor: '#4F46E5',
+                backgroundColor: 'rgba(79, 70, 229, 0.08)',
+                fill: true,
+                tension: 0.35,
+                borderWidth: 2.5
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Batch Distribution Chart
+    const batchCtx = document.getElementById('batchDistributionChart').getContext('2d');
+    new Chart(batchCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ stats.batch_labels | tojson }},
+            datasets: [{
+                data: {{ stats.batch_student_counts | tojson }},
+                backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#06B6D4', '#8B5CF6', '#EC4899']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+});
+</script>
+{% endblock %}

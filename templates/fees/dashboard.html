@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Fee Management — {{ super() }}{% endblock %}
+{% block header_title %}Fee Collection & Financial Dashboard{% endblock %}
+
+{% block content %}
+<!-- Summary Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon success mb-2"><i class="bi bi-cash-coin"></i></div>
+            <div class="stat-value">{{ (today_collection or 0.0) | currency }}</div>
+            <div class="stat-label">Today's Collection</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon info mb-2"><i class="bi bi-wallet-fill"></i></div>
+            <div class="stat-value">{{ (monthly_collection or 0.0) | currency }}</div>
+            <div class="stat-label">This Month's Collection</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon warning mb-2"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="stat-value">{{ (total_pending or 0.0) | currency }}</div>
+            <div class="stat-label">Total Overdue / Pending Fees</div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Student Fee Accounts</h5>
+        <a href="{{ url_for('fees.structures') }}" class="btn btn-outline-primary btn-sm fw-semibold"><i class="bi bi-gear-fill me-1"></i> Fee Structures</a>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="card-body p-3 border-bottom bg-light">
+        <form method="GET" action="{{ url_for('fees.index') }}" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search by Student Code..." value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="all">All Fee Statuses</option>
+                    <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="partial" {% if selected_status == 'partial' %}selected{% endif %}>Partial Paid</option>
+                    <option value="paid" {% if selected_status == 'paid' %}selected{% endif %}>Paid in Full</option>
+                    <option value="overdue" {% if selected_status == 'overdue' %}selected{% endif %}>Overdue</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="class_id" class="form-select form-select-sm">
+                    <option value="">All Classes</option>
+                    {% for c in classes %}<option value="{{ c.id }}" {% if selected_class == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">Filter Accounts</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Student Code</th>
+                    <th>Student Name</th>
+                    <th>Fee Structure</th>
+                    <th>Total Payable</th>
+                    <th>Total Paid</th>
+                    <th>Balance Due</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sf in student_fees %}
+                <tr>
+                    <td class="fw-semibold text-primary">{{ sf.student.student_code if sf.student else 'N/A' }}</td>
+                    <td class="fw-bold text-dark">{{ sf.student.full_name if sf.student else 'N/A' }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ sf.fee_structure.name if sf.fee_structure else 'Custom' }}</span></td>
+                    <td class="fw-semibold">{{ sf.total_payable | currency }}</td>
+                    <td class="text-success font-monospace">{{ sf.total_paid | currency }}</td>
+                    <td class="fw-bold text-danger font-monospace">{{ sf.balance | currency }}</td>
+                    <td><span class="badge-status {{ sf.status }}">{{ sf.status.title() }}</span></td>
+                    <td>
+                        {% if sf.balance > 0 %}
+                        <a href="{{ url_for('fees.collect', student_fee_id=sf.id) }}" class="btn btn-sm btn-success fw-semibold"><i class="bi bi-cash"></i> Collect</a>
+                        {% else %}
+                        <span class="badge bg-light text-success border"><i class="bi bi-check-circle"></i> Clear</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-4">No student fee records found matching filters.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

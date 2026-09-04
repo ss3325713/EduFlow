@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Post Announcement — {{ super() }}{% endblock %}
+{% block header_title %}Post New Announcement{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('announcements.add') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label class="form-label text-secondary fw-semibold small">Notice Title *</label>
+                            <input type="text" name="title" class="form-control" placeholder="e.g. Schedule Update for Diwali Holidays" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Target Audience *</label>
+                            <select name="target_role" class="form-select">
+                                <option value="all">Everyone (All Users)</option>
+                                <option value="teacher">Teachers Only</option>
+                                <option value="student">Students Only</option>
+                                <option value="parent">Parents Only</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Priority Level</label>
+                            <select name="priority" class="form-select">
+                                <option value="normal">Normal</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent / Alert</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Specific Class (Optional)</label>
+                            <select name="class_id" class="form-select">
+                                <option value="">All Classes</option>
+                                {% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Specific Batch (Optional)</label>
+                            <select name="batch_id" class="form-select">
+                                <option value="">All Batches</option>
+                                {% for b in batches %}
+                                <option value="{{ b.id }}" data-class-id="{{ b.class_id }}">{{ b.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-secondary fw-semibold small">Notice Content *</label>
+                            <textarea name="content" class="form-control" rows="5" placeholder="Write announcement details..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('announcements.index') }}" class="btn btn-outline-secondary px-4 fw-semibold">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">Publish Notice</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const classSelect = document.querySelector('select[name="class_id"]');
+    const batchSelect = document.querySelector('select[name="batch_id"]');
+
+    function filterOptions() {
+        const selectedClassId = classSelect.value;
+        Array.from(batchSelect.options).forEach(opt => {
+            if (!opt.value) return;
+            const classId = opt.getAttribute('data-class-id');
+            if (!selectedClassId || classId === selectedClassId) {
+                opt.style.display = '';
+                opt.disabled = false;
+            } else {
+                opt.style.display = 'none';
+                opt.disabled = true;
+            }
+        });
+        if (batchSelect.selectedOptions[0] && batchSelect.selectedOptions[0].disabled) {
+            batchSelect.value = '';
+        }
+    }
+
+    if (classSelect) {
+        classSelect.addEventListener('change', filterOptions);
+        filterOptions();
+    }
+});
+</script>
+{% endblock %}

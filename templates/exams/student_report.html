@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Card — {{ student.full_name }} — {{ exam.title }}{% endblock %}
+{% block header_title %}Student Performance Report Card{% endblock %}
+
+{% block content %}
+<!-- Print Action Bar (Hidden during Print) -->
+<div class="d-flex justify-content-between align-items-center mb-3 no-print">
+    {% if current_user.is_admin() or current_user.is_teacher() %}
+    <a href="{{ url_for('exams.reports_list', exam_id=exam.id) }}" class="btn btn-outline-secondary btn-sm fw-semibold">
+        <i class="bi bi-arrow-left me-1"></i> Back to Exam Batch Reports
+    </a>
+    {% else %}
+    <a href="{{ url_for('exams.index') }}" class="btn btn-outline-secondary btn-sm fw-semibold">
+        <i class="bi bi-arrow-left me-1"></i> Back to Examinations List
+    </a>
+    {% endif %}
+    <button onclick="window.print()" class="btn btn-primary btn-sm fw-semibold shadow-sm">
+        <i class="bi bi-printer-fill me-1"></i> Print / Download PDF Report
+    </button>
+</div>
+
+<!-- Report Card Container -->
+<div class="card border-0 shadow-sm print-report-card" style="border-radius: var(--radius-lg); background: #ffffff;">
+    <div class="card-body p-4 p-md-5">
+
+        <!-- Institution Header -->
+        <div class="text-center border-bottom pb-4 mb-4">
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; font-size: 1.5rem; font-weight: bold;">
+                    {{ settings.name[0] }}
+                </div>
+                <h2 class="fw-bold text-dark mb-0 tracking-tight" style="font-family: 'Inter', sans-serif; letter-spacing: -0.5px;">
+                    {{ settings.name }}
+                </h2>
+            </div>
+            <p class="text-primary fw-semibold small mb-1">{{ settings.tagline }}</p>
+            <p class="text-muted small mb-2">
+                <i class="bi bi-geo-alt me-1"></i> {{ settings.address }} | 
+                <i class="bi bi-telephone me-1"></i> {{ settings.phone }} | 
+                <i class="bi bi-envelope me-1"></i> {{ settings.email }}
+            </p>
+            <div class="d-inline-block bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-bold border border-primary-subtle uppercase small mt-1">
+                ACADEMIC PERFORMANCE REPORT CARD — {{ settings.academic_session }}
+            </div>
+        </div>
+
+        <!-- Student & Exam Details Grid -->
+        <div class="row g-3 p-3 bg-light rounded-3 mb-4 border">
+            <div class="col-md-6 col-6">
+                <div class="mb-1"><span class="text-secondary small fw-semibold">Student Name:</span> <strong class="text-dark fs-6">{{ student.full_name }}</strong></div>
+                <div class="mb-1"><span class="text-secondary small fw-semibold">Student Code:</span> <span class="badge bg-white text-dark border">{{ student.student_code }}</span></div>
+                <div><span class="text-secondary small fw-semibold">Roll Number:</span> <span class="text-dark fw-semibold">{{ student.roll_number or 'N/A' }}</span></div>
+            </div>
+            <div class="col-md-6 col-6 text-end">
+                <div class="mb-1"><span class="text-secondary small fw-semibold">Exam Title:</span> <strong class="text-primary fs-6">{{ exam.title }}</strong></div>
+                <div class="mb-1"><span class="text-secondary small fw-semibold">Class & Batch:</span> <span class="text-dark fw-semibold">{{ exam.academic_class.name if exam.academic_class else '' }} — {{ exam.batch.name if exam.batch else '' }}</span></div>
+                <div><span class="text-secondary small fw-semibold">Date of Exam:</span> <span class="text-dark fw-semibold">{{ exam.exam_date }}</span></div>
+            </div>
+        </div>
+
+        <!-- Overall Score Summary Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="p-3 bg-primary-subtle text-primary rounded-3 text-center border border-primary-subtle">
+                    <div class="small fw-semibold text-uppercase">Total Score</div>
+                    <div class="fs-4 fw-bold mb-0">{{ total_obtained }} / {{ total_max }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-3 bg-success-subtle text-success rounded-3 text-center border border-success-subtle">
+                    <div class="small fw-semibold text-uppercase">Overall Percentage</div>
+                    <div class="fs-4 fw-bold mb-0">{{ overall_pct }}%</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-3 bg-info-subtle text-info-emphasis rounded-3 text-center border border-info-subtle">
+                    <div class="small fw-semibold text-uppercase">Overall Grade</div>
+                    <div class="fs-4 fw-bold mb-0">{{ overall_grade }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-3 bg-warning-subtle text-warning-emphasis rounded-3 text-center border border-warning-subtle">
+                    <div class="small fw-semibold text-uppercase">Class Rank</div>
+                    <div class="fs-4 fw-bold mb-0">#{{ class_rank }} <span class="fs-6 text-muted fw-normal">of {{ total_students }}</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject Performance Marks Table -->
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-journal-text me-2 text-primary"></i>Subject Marks Breakdown & Benchmarks</h6>
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Subject Name</th>
+                        <th class="text-center">Student Score</th>
+                        <th class="text-center">Max Marks</th>
+                        <th class="text-center">Class Highest</th>
+                        <th class="text-center">Class Average</th>
+                        <th class="text-center">Percentage</th>
+                        <th class="text-center">Grade</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in subject_reports %}
+                    <tr>
+                        <td>
+                            <strong class="text-dark">{{ r.subject_name }}</strong>
+                            <div class="text-muted small">{{ r.subject_code }}</div>
+                        </td>
+                        <td class="text-center fw-bold text-primary fs-6">{{ r.marks_obtained }}</td>
+                        <td class="text-center text-muted">{{ r.max_marks }}</td>
+                        <td class="text-center text-success fw-semibold"><i class="bi bi-trophy-fill me-1"></i>{{ r.class_highest }}</td>
+                        <td class="text-center text-muted">{{ r.class_average }}</td>
+                        <td class="text-center fw-semibold">{{ r.percentage }}%</td>
+                        <td class="text-center">
+                            <span class="badge {% if r.grade == 'A+' or r.grade == 'A' %}bg-success{% elif r.grade == 'B' %}bg-primary{% elif r.grade == 'C' %}bg-info text-dark{% elif r.grade == 'D' %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6">
+                                {{ r.grade }}
+                            </span>
+                        </td>
+                        <td class="text-muted small">{{ r.remarks }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Subject Comparative Bar Chart -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-12">
+                <div class="p-3 bg-white border rounded-3">
+                    <h6 class="fw-bold text-dark mb-3">
+                        <i class="bi bi-bar-chart-line-fill me-2 text-primary"></i>Comparative Performance Chart (Student vs Class Highest vs Class Average)
+                    </h6>
+                    <div class="no-print" style="position: relative; height: 280px; width: 100%;">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+
+                    <!-- Print-Optimized Fallback Bars (Always Visible in Print Mode) -->
+                    <div class="print-only mt-3">
+                        {% for r in subject_reports %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small fw-bold mb-1">
+                                <span>{{ r.subject_name }}</span>
+                                <span>Student: {{ r.marks_obtained }} | Highest: {{ r.class_highest }} | Avg: {{ r.class_average }}</span>
+                            </div>
+                            <div class="d-flex gap-1" style="height: 14px;">
+                                <div class="bg-primary rounded-1" style="width: {{ (r.marks_obtained / r.max_marks * 100) if r.max_marks > 0 else 0 }}%;" title="Student Mark"></div>
+                                <div class="bg-success rounded-1" style="width: {{ (r.class_highest / r.max_marks * 100) if r.max_marks > 0 else 0 }}%; opacity: 0.7;" title="Highest"></div>
+                                <div class="bg-warning rounded-1" style="width: {{ (r.class_average / r.max_marks * 100) if r.max_marks > 0 else 0 }}%; opacity: 0.7;" title="Average"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        <div class="d-flex gap-3 justify-content-center small text-muted mt-2">
+                            <span><span class="d-inline-block bg-primary rounded-circle" style="width:10px; height:10px;"></span> Student Score</span>
+                            <span><span class="d-inline-block bg-success rounded-circle" style="width:10px; height:10px;"></span> Class Highest</span>
+                            <span><span class="d-inline-block bg-warning rounded-circle" style="width:10px; height:10px;"></span> Class Average</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher Observations & Achievements -->
+        <div class="p-3 bg-light rounded-3 border mb-5">
+            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-person-workspace me-2 text-primary"></i>Faculty Evaluation & Achievements Remarks</h6>
+            <p class="text-dark mb-0 leading-relaxed">{{ teacher_notes }}</p>
+        </div>
+
+        <!-- Signature Verification Footer -->
+        <div class="pt-5 border-top mt-5">
+            <div class="row text-center align-items-end g-4">
+                <div class="col-4">
+                    <div class="border-top border-dark border-2 pt-2 fw-semibold text-dark small">
+                        Class Teacher Signature
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="border-top border-dark border-2 pt-2 fw-semibold text-dark small">
+                        Principal / Director Signature
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="border-top border-dark border-2 pt-2 fw-semibold text-dark small">
+                        Parent / Guardian Signature
+                    </div>
+                </div>
+            </div>
+            <div class="text-center text-muted small mt-4">
+                This academic report card is generated electronically by {{ settings.name }} Management System.
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('performanceChart');
+    if (!ctx) return;
+
+    const subjectLabels = [{% for r in subject_reports %}"{{ r.subject_name }}",{% endfor %}];
+    const studentData = [{% for r in subject_reports %}{{ r.marks_obtained }},{% endfor %}];
+    const highestData = [{% for r in subject_reports %}{{ r.class_highest }},{% endfor %}];
+    const averageData = [{% for r in subject_reports %}{{ r.class_average }},{% endfor %}];
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: subjectLabels,
+            datasets: [
+                {
+                    label: "Student's Score",
+                    data: studentData,
+                    backgroundColor: '#4F46E5',
+                    borderRadius: 6
+                },
+                {
+                    label: "Class Highest",
+                    data: highestData,
+                    backgroundColor: '#10B981',
+                    borderRadius: 6
+                },
+                {
+                    label: "Class Average",
+                    data: averageData,
+                    backgroundColor: '#F59E0B',
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Marks'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+<!-- Print Styling -->
+<style>
+.print-only {
+    display: none;
+}
+
+@media print {
+    /* Hide Navigation, Sidebar, Headers & Action Buttons */
+    .sidebar, .navbar, .header, footer, .no-print, nav, .btn, .alert-container {
+        display: none !important;
+    }
+    
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 12pt;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .container, .container-fluid {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .print-report-card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}New Enquiry — {{ super() }}{% endblock %}
+{% block header_title %}Record Admission Enquiry{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('admissions.add') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Student Full Name *</label>
+                            <input type="text" name="student_name" class="form-control" placeholder="e.g. Alex Rivera" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Parent / Guardian Name</label>
+                            <input type="text" name="parent_name" class="form-control" placeholder="e.g. Robert Rivera">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Contact Mobile *</label>
+                            <input type="text" name="mobile" class="form-control" placeholder="e.g. +1 555-0192" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Email Address</label>
+                            <input type="email" name="email" class="form-control" placeholder="e.g. alex@rivera.com">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Interested Class</label>
+                            <select name="interested_class_id" class="form-select">
+                                <option value="">Select Interested Class</option>
+                                {% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-secondary fw-semibold small">Initial Notes & Requirements</label>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Notes on student background, target exam (JEE, NEET, Board), preferred morning/evening batch..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('admissions.index') }}" class="btn btn-outline-secondary px-4 fw-semibold">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">Record Enquiry</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

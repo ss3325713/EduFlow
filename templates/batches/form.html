@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'Edit Batch' if batch else 'Create Batch' }} — {{ super() }}{% endblock %}
+{% block header_title %}{{ 'Edit Batch' if batch else 'Create New Batch' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('batches.edit', batch_id=batch.id) if batch else url_for('batches.add') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Batch Name *</label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Morning JEE Batch" value="{{ batch.name if batch else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Batch Code *</label>
+                            <input type="text" name="code" class="form-control" placeholder="e.g. B-JEE-01" value="{{ batch.code if batch else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Academic Class *</label>
+                            <select name="class_id" class="form-select" required>
+                                <option value="">Select Class</option>
+                                {% for c in classes %}
+                                <option value="{{ c.id }}" {% if batch and batch.class_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Maximum Student Capacity</label>
+                            <input type="number" name="max_capacity" class="form-control" value="{{ batch.max_capacity if batch else 30 }}" min="1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Start Date</label>
+                            <input type="date" name="start_date" class="form-control" value="{{ batch.start_date if batch and batch.start_date else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">End Date</label>
+                            <input type="date" name="end_date" class="form-control" value="{{ batch.end_date if batch and batch.end_date else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-secondary fw-semibold small">Schedule Description</label>
+                            <input type="text" name="schedule_description" class="form-control" placeholder="e.g. Mon-Fri 08:00 AM - 12:00 PM" value="{{ batch.schedule_description if batch else '' }}">
+                        </div>
+                        {% if batch %}
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-semibold small">Batch Status</label>
+                            <select name="status" class="form-select">
+                                <option value="active" {% if batch.status == 'active' %}selected{% endif %}>Active</option>
+                                <option value="completed" {% if batch.status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="archived" {% if batch.status == 'archived' %}selected{% endif %}>Archived</option>
+                            </select>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('batches.index') }}" class="btn btn-outline-secondary px-4 fw-semibold">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">{{ 'Save Changes' if batch else 'Create Batch' }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

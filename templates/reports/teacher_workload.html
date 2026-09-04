@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Workload — {{ super() }}{% endblock %}
+{% block header_title %}Faculty Workload Analysis{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-badge-fill me-2 text-primary"></i>Faculty Workload Summary</h5>
+    </div>
+
+    <!-- Navigation Subtabs -->
+    <div class="card-body p-3 border-bottom bg-light">
+        <ul class="nav nav-pills nav-fill gap-2">
+            <li class="nav-item"><a href="{{ url_for('reports.index', type='financial') }}" class="nav-link text-secondary fw-semibold">Financial Ledger</a></li>
+            <li class="nav-item"><a href="{{ url_for('reports.index', type='attendance') }}" class="nav-link text-secondary fw-semibold">Attendance Analytics</a></li>
+            <li class="nav-item"><a href="{{ url_for('reports.index', type='teacher_workload') }}" class="nav-link active fw-semibold">Faculty Workload</a></li>
+        </ul>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Teacher Code</th>
+                    <th>Teacher Name</th>
+                    <th>Specialization</th>
+                    <th>Assigned Batches Count</th>
+                    <th>Assigned Subjects Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in workload %}
+                <tr>
+                    <td class="fw-semibold text-primary">{{ w.teacher.teacher_code }}</td>
+                    <td class="fw-bold text-dark">{{ w.teacher.full_name }}</td>
+                    <td>{{ w.teacher.specialization or 'General' }}</td>
+                    <td><span class="badge bg-primary-subtle text-primary fs-6">{{ w.batches_count }} Batches</span></td>
+                    <td><span class="badge bg-light text-dark border fs-6">{{ w.subjects_count }} Subjects</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">No teacher workload metrics recorded.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

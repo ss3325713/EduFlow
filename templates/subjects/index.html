@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Subject Management — {{ super() }}{% endblock %}
+{% block header_title %}Subject Catalogue{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-journal-bookmark-fill me-2 text-primary"></i>Subjects</h5>
+        {% if current_user.is_admin() %}
+        <a href="{{ url_for('subjects.add') }}" class="btn btn-primary btn-sm fw-semibold shadow-sm"><i class="bi bi-plus-lg me-1"></i> Add Subject</a>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Subject Name</th>
+                    <th>Class</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in subjects %}
+                <tr>
+                    <td class="fw-semibold text-primary">{{ s.code }}</td>
+                    <td class="fw-bold text-dark">{{ s.name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ s.academic_class.name if s.academic_class else '' }}</span></td>
+                    <td class="text-muted small">{{ s.description or 'N/A' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-4">No subjects added yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

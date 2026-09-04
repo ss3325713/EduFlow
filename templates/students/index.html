@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Management — {{ super() }}{% endblock %}
+{% block header_title %}Students Directory{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>All Students</h5>
+        <div class="d-flex gap-2">
+            {% if current_user.is_admin() %}
+            <a href="{{ url_for('students.requests_list') }}" class="btn btn-outline-warning btn-sm fw-semibold position-relative">
+                <i class="bi bi-flag-fill me-1"></i> Teacher Requests
+                {% if pending_requests_count > 0 %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ pending_requests_count }}
+                </span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('students.add') }}" class="btn btn-primary btn-sm fw-semibold shadow-sm"><i class="bi bi-person-plus-fill me-1"></i> Register Student</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="card-body p-3 border-bottom bg-light">
+        <form method="GET" action="{{ url_for('students.index') }}" class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search by Name, Code, or Phone..." value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="class_id" class="form-select form-select-sm">
+                    <option value="">All Classes</option>
+                    {% for c in classes %}
+                    <option value="{{ c.id }}" {% if selected_class == c.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="batch_id" class="form-select form-select-sm">
+                    <option value="">All Batches</option>
+                    {% for b in batches %}
+                    <option value="{{ b.id }}" {% if selected_batch == b.id %}selected{% endif %}>{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="all" {% if selected_status == 'all' or not selected_status %}selected{% endif %}>All Statuses</option>
+                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active Only</option>
+                    <option value="disabled" {% if selected_status == 'disabled' %}selected{% endif %}>Disabled Only</option>
+                    <option value="suspended" {% if selected_status == 'suspended' %}selected{% endif %}>Suspended Only</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">Filter</button>
+                <a href="{{ url_for('students.index') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Full Name</th>
+                    <th>Class</th>
+                    <th>Batch</th>
+                    <th>Mobile</th>
+                    <th>Attendance %</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td class="fw-semibold text-primary">{{ s.student_code }}</td>
+                    <td>
+                        <a href="{{ url_for('students.view', student_id=s.id) }}" class="text-decoration-none text-dark fw-semibold">{{ s.full_name }}</a>
+                        {% if not s.user.is_active %}
+                        <span class="badge bg-secondary-subtle text-secondary border ms-1" style="font-size: 0.65rem;">Login Blocked</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ s.academic_class.name if s.academic_class else 'Unassigned' }}</span></td>
+                    <td><span class="badge bg-primary-subtle text-primary">{{ s.batch.name if s.batch else 'Unassigned' }}</span></td>
+                    <td class="text-muted small">{{ s.mobile or 'N/A' }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold small">{{ s.attendance_percentage }}%</span>
+                            <div class="progress flex-grow-1" style="height: 5px; width: 60px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ s.attendance_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if not s.user.is_active or s.status == 'disabled' %}
+                        <span class="badge bg-danger-subtle text-danger border fw-semibold"><i class="bi bi-lock-fill me-1"></i> Disabled</span>
+                        {% elif s.status == 'suspended' %}
+                        <span class="badge bg-warning-subtle text-warning border fw-semibold"><i class="bi bi-person-x-fill me-1"></i> Suspended</span>
+                        {% else %}
+                        <span class="badge-status {{ s.status }}">{{ s.status.title() }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{{ url_for('students.view', student_id=s.id) }}" class="btn btn-sm btn-light border" title="View Profile"><i class="bi bi-eye"></i></a>
+                            {% if current_user.is_admin() %}
+                            <a href="{{ url_for('students.edit', student_id=s.id) }}" class="btn btn-sm btn-light border" title="Edit Student"><i class="bi bi-pencil"></i></a>
+                            {% if s.user.is_active %}
+                            <form method="POST" action="{{ url_for('students.disable', student_id=s.id) }}" class="d-inline" onsubmit="return confirm('Disable login for {{ s.full_name }}? Records will be preserved.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-warning" title="Disable Login / Soft Delete"><i class="bi bi-lock-fill"></i></button>
+                            </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('students.enable', student_id=s.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Re-enable Login"><i class="bi bi-unlock-fill"></i></button>
+                            </form>
+                            {% endif %}
+                            {% endif %}
+
+                            {% if current_user.is_super_admin() %}
+                            {% if not s.user.is_active %}
+                            <form method="POST" action="{{ url_for('students.delete', student_id=s.id) }}" onsubmit="return confirm('Permanently purge disabled student account {{ s.full_name }} from database?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Permanently Purge Account"><i class="bi bi-trash"></i></button>
+                            </form>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-4">No students found matching search filters.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

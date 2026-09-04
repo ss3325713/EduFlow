@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Exam Performance Reports — {{ exam.title }}{% endblock %}
+{% block header_title %}Student Exam Reports{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+            <h5 class="fw-bold text-dark mb-1"><i class="bi bi-file-earmark-bar-graph-fill me-2 text-primary"></i>Exam Reports — {{ exam.title }}</h5>
+            <span class="badge bg-light text-dark border">Class: {{ exam.academic_class.name if exam.academic_class else '' }}</span>
+            <span class="badge bg-primary-subtle text-primary border">Batch: {{ exam.batch.name if exam.batch else '' }}</span>
+            <span class="badge bg-secondary-subtle text-secondary border">Date: {{ exam.exam_date }}</span>
+        </div>
+        <a href="{{ url_for('exams.index') }}" class="btn btn-outline-secondary btn-sm fw-semibold">Back to Exams</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Student Code</th>
+                    <th>Student Name</th>
+                    <th>Total Obtained</th>
+                    <th>Percentage</th>
+                    <th>Overall Grade</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                {% set sc = student_scores.get(s.id, {}) %}
+                <tr>
+                    <td>
+                        <span class="badge {% if sc.rank == 1 %}bg-warning text-dark{% elif sc.rank == 2 %}bg-secondary text-white{% elif sc.rank == 3 %}bg-danger-subtle text-danger{% else %}bg-light text-dark border{% endif %} fw-bold fs-6">
+                            #{{ sc.rank }}
+                        </span>
+                    </td>
+                    <td class="fw-semibold text-primary">{{ s.student_code }}</td>
+                    <td class="fw-bold text-dark">{{ s.full_name }}</td>
+                    <td class="fw-bold">{{ sc.total_obtained }} / {{ sc.total_max }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold small">{{ sc.percentage }}%</span>
+                            <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                                <div class="progress-bar {% if sc.percentage >= 80 %}bg-success{% elif sc.percentage >= 60 %}bg-primary{% elif sc.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ sc.percentage }}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge {% if sc.grade == 'A+' or sc.grade == 'A' %}bg-success{% elif sc.grade == 'B' %}bg-primary{% elif sc.grade == 'C' %}bg-info text-dark{% elif sc.grade == 'D' %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6">
+                            {{ sc.grade }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('exams.student_report', exam_id=exam.id, student_id=s.id) }}" class="btn btn-sm btn-primary fw-semibold shadow-sm">
+                            <i class="bi bi-file-earmark-text-fill me-1"></i> View Report Card
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-4">No student records available for this exam.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

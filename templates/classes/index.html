@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Class Management — {{ super() }}{% endblock %}
+{% block header_title %}Classes & Academic Levels{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm" style="border-radius: var(--radius-lg);">
+    <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-building me-2 text-primary"></i>Classes</h5>
+        {% if current_user.is_admin() %}
+        <a href="{{ url_for('classes.add') }}" class="btn btn-primary btn-sm fw-semibold shadow-sm"><i class="bi bi-plus-lg me-1"></i> Add Class</a>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Class Name</th>
+                    <th>Subjects Count</th>
+                    <th>Active Batches</th>
+                    <th>Enrolled Students</th>
+                    {% if current_user.is_admin() %}<th>Actions</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in classes %}
+                <tr>
+                    <td class="fw-semibold text-primary">{{ c.code }}</td>
+                    <td class="fw-bold text-dark">{{ c.name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ c.subjects.count() }} Subjects</span></td>
+                    <td><span class="badge bg-primary-subtle text-primary">{{ c.batches.count() }} Batches</span></td>
+                    <td><span class="badge bg-success-subtle text-success">{{ c.students.count() }} Students</span></td>
+                    {% if current_user.is_admin() %}
+                    <td>
+                        <a href="{{ url_for('classes.edit', class_id=c.id) }}" class="btn btn-sm btn-light border"><i class="bi bi-pencil"></i> Edit</a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No classes created yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
