@@ -24,9 +24,32 @@ def create_app(config_name='development'):
     migrate.init_app(app, db)
     csrf.init_app(app)
 
+    # Automatic self-healing database schema initialization
+    with app.app_context():
+        try:
+            db.create_all()
+            with db.engine.connect() as conn:
+                inspector = db.inspect(db.engine)
+                if 'users' in inspector.get_table_names():
+                    existing_cols = [c['name'] for c in inspector.get_columns('users')]
+                    if 'is_verified' not in existing_cols:
+                        conn.execute(db.text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1"))
+                    if 'verification_token_hash' not in existing_cols:
+                        conn.execute(db.text("ALTER TABLE users ADD COLUMN verification_token_hash VARCHAR(128)"))
+                    if 'verification_sent_at' not in existing_cols:
+                        conn.execute(db.text("ALTER TABLE users ADD COLUMN verification_sent_at DATETIME"))
+                    if 'password_reset_token_hash' not in existing_cols:
+                        conn.execute(db.text("ALTER TABLE users ADD COLUMN password_reset_token_hash VARCHAR(128)"))
+                    if 'password_reset_expires_at' not in existing_cols:
+                        conn.execute(db.text("ALTER TABLE users ADD COLUMN password_reset_expires_at DATETIME"))
+                    conn.commit()
+        except Exception as err:
+            app.logger.warning(f"Auto database schema migration notice: {err}")
+
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
 
     # Global context processors for templates
     @app.context_processor
