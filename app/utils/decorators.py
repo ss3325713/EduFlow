@@ -13,7 +13,7 @@ def role_required(*roles):
                 flash('Please log in to access this page.', 'warning')
                 return redirect(url_for('auth.login', next=request.url))
 
-            if current_user.role not in roles and Role.SUPER_ADMIN not in roles and not current_user.is_super_admin():
+            if current_user.role not in roles and not current_user.is_super_admin():
                 if request.is_json or request.path.startswith('/api/'):
                     return jsonify({'error': 'Permission denied'}), 403
                 flash('You do not have permission to access this resource.', 'danger')

@@ -145,6 +145,7 @@ def create_app(config_name='development'):
     from app.audit import audit_bp
     from app.diary import diary_bp
     from app.notifications import notifications_bp
+    from app.requests import requests_bp
     from app.api.v1 import api_v1_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -168,6 +169,7 @@ def create_app(config_name='development'):
     app.register_blueprint(audit_bp, url_prefix='/audit')
     app.register_blueprint(diary_bp, url_prefix='/diary')
     app.register_blueprint(notifications_bp, url_prefix='/notifications')
+    app.register_blueprint(requests_bp, url_prefix='/requests')
     
     # Exclude CSRF for REST API blueprint
     csrf.exempt(api_v1_bp)

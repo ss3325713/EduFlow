@@ -1,0 +1,81 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th class="ps-3">Teacher</th>
+                <th>Category & Request Title</th>
+                <th>Specific Parameters</th>
+                <th>Attachment</th>
+                <th>Submitted</th>
+                <th class="text-end pe-3">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in pending_requests %}
+            <tr>
+                <td class="ps-3">
+                    <div class="fw-bold text-dark">{{ r.teacher.user.full_name if r.teacher and r.teacher.user else 'Teacher #' ~ r.teacher_id }}</div>
+                    <div class="text-muted small">Code: <span class="badge bg-light text-dark border">{{ r.teacher.teacher_code if r.teacher else 'N/A' }}</span></div>
+                </td>
+                <td>
+                    <div>
+                        {% if r.request_type == 'leave' %}
+                            <span class="badge bg-danger-subtle text-danger border"><i class="bi bi-calendar-minus me-1"></i>Leave</span>
+                        {% elif r.request_type == 'schedule_change' %}
+                            <span class="badge bg-primary-subtle text-primary border"><i class="bi bi-clock-history me-1"></i>Schedule Change</span>
+                        {% elif r.request_type == 'batch_allocation' %}
+                            <span class="badge bg-info-subtle text-info border"><i class="bi bi-diagram-3 me-1"></i>Batch Allocation</span>
+                        {% elif r.request_type == 'schedule_new_class' %}
+                            <span class="badge bg-purple-subtle text-purple border" style="background:#f3e8ff; color:#6b21a8;"><i class="bi bi-calendar-plus me-1"></i>New Class</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary border"><i class="bi bi-chat-dots me-1"></i>Other</span>
+                        {% endif %}
+                        <strong class="text-dark d-block mt-1">{{ r.title }}</strong>
+                    </div>
+                    <div class="text-secondary small text-truncate" style="max-width: 280px;" title="{{ r.description }}">{{ r.description }}</div>
+                </td>
+                <td class="small">
+                    {% if r.request_type == 'leave' %}
+                        <div><strong>Dates:</strong> {{ r.start_date }} to {{ r.end_date }}</div>
+                    {% elif r.request_type == 'schedule_change' %}
+                        <div><strong>Action:</strong> <span class="text-uppercase fw-bold text-primary">{{ r.change_action }}</span></div>
+                        {% if r.timetable %}
+                        <div class="text-muted"><i class="bi bi-book me-1"></i>{{ r.timetable.batch.batch_name }} - {{ r.timetable.subject.subject_name }}</div>
+                        {% endif %}
+                        {% if r.proposed_date %}
+                        <div><strong>Proposed:</strong> {{ r.proposed_date }} at {{ r.proposed_time }}</div>
+                        {% endif %}
+                    {% elif r.request_type == 'batch_allocation' %}
+                        <div><strong>Action:</strong> {{ r.allocation_action|title }}</div>
+                        {% if r.target_batch %}<div>Batch: {{ r.target_batch.batch_name }}</div>{% endif %}
+                        {% if r.target_subject %}<div>Subject: {{ r.target_subject.subject_name }}</div>{% endif %}
+                    {% elif r.request_type == 'schedule_new_class' %}
+                        <div><strong>New Class:</strong> {{ r.proposed_date }} at {{ r.proposed_time }}</div>
+                        <div>Duration: {{ r.duration_minutes }} min</div>
+                        {% if r.target_batch %}<div>Batch: {{ r.target_batch.batch_name }}</div>{% endif %}
+                    {% else %}
+                        <span class="text-muted">Standard Inquiry</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if r.attachment_path %}
+                    <a href="{{ url_for('static', filename=r.attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary py-1 px-2 rounded-2">
+                        <i class="bi bi-paperclip me-1"></i>View
+                    </a>
+                    {% else %}
+                    <span class="text-muted small">None</span>
+                    {% endif %}
+                </td>
+                <td class="small text-muted text-nowrap">
+                    {{ r.created_at.strftime('%b %d, %Y %I:%M %p') if r.created_at else '-' }}
+                </td>
+                <td class="text-end pe-3">
+                    <button class="btn btn-sm btn-primary fw-semibold rounded-3 px-3 shadow-xs" onclick="openProcessModal({{ r.id }}, '{{ r.teacher.user.full_name if r.teacher and r.teacher.user else 'Teacher' }}', '{{ r.request_type }}', '{{ r.title|e if r.title else '' }}', '{{ r.status }}')">
+                        <i class="bi bi-pencil-square me-1"></i> Review & Process
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

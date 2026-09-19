@@ -732,6 +732,41 @@ def test_notification_system_comprehensive(app_instance):
         assert n_other_db.is_read is False
 
 
+def test_request_center_route_and_404_safety(app_instance):
+    from app.models import User, Role
+
+    with app_instance.app_context():
+        admin = User(username='reqadmin', email='reqadmin@test.com', first_name='Req', last_name='Admin', role=Role.SUPER_ADMIN, is_active=True, is_verified=True)
+        admin.set_password('Pass123')
+        db.session.add(admin)
+
+        teacher = User(username='reqteacher', email='reqteacher@test.com', first_name='Req', last_name='Teacher', role=Role.TEACHER, is_active=True, is_verified=True)
+        teacher.set_password('Pass123')
+        db.session.add(teacher)
+        db.session.commit()
+
+        # 1. Admin accesses Request Center /requests/admin/center -> 200 OK
+        client_admin = app_instance.test_client()
+        client_admin.post('/auth/login', data={'login_type': 'super_admin', 'email': 'reqadmin@test.com', 'password': 'Pass123'}, follow_redirects=True)
+        res_admin = client_admin.get('/requests/admin/center')
+        assert res_admin.status_code == 200
+        assert b'Request Center' in res_admin.data
+        client_admin.get('/auth/logout', follow_redirects=True)
+
+        # 2. Teacher attempts to access /requests/admin/center -> Redirect (302)
+        client_teacher = app_instance.test_client()
+        client_teacher.post('/auth/login', data={'login_identifier': 'reqteacher', 'password': 'Pass123'}, follow_redirects=True)
+        res_teacher = client_teacher.get('/requests/admin/center', follow_redirects=False)
+        assert res_teacher.status_code in [302, 403]
+        client_teacher.get('/auth/logout', follow_redirects=True)
+
+        # 3. Nonexistent route -> 404 Not Found (and 404 template renders cleanly without TypeError / 500)
+        res_404 = client_admin.get('/this-route-does-not-exist')
+        assert res_404.status_code == 404
+        assert b'404' in res_404.data
+
+
+
 
 
 

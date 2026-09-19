@@ -36,29 +36,29 @@
 
                 {% if current_user.is_admin() or current_user.is_teacher() %}
                 <div class="menu-category">Academic Management</div>
-                <a href="{{ url_for('students.index') }}" class="nav-link-item {% if 'students' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('students.index') }}" class="nav-link-item {% if request.endpoint and 'students' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-people-fill"></i>
                     <span>Students</span>
                 </a>
                 {% if current_user.is_admin() %}
-                <a href="{{ url_for('teachers.index') }}" class="nav-link-item {% if 'teachers' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('teachers.index') }}" class="nav-link-item {% if request.endpoint and 'teachers' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-person-badge-fill"></i>
                     <span>Teachers</span>
                 </a>
-                <a href="{{ url_for('parents.index') }}" class="nav-link-item {% if 'parents' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('parents.index') }}" class="nav-link-item {% if request.endpoint and 'parents' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-house-heart-fill"></i>
                     <span>Parents</span>
                 </a>
-                <a href="{{ url_for('classes.index') }}" class="nav-link-item {% if 'classes' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('classes.index') }}" class="nav-link-item {% if request.endpoint and 'classes' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-building"></i>
                     <span>Classes</span>
                 </a>
-                <a href="{{ url_for('subjects.index') }}" class="nav-link-item {% if 'subjects' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('subjects.index') }}" class="nav-link-item {% if request.endpoint and 'subjects' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-journal-bookmark-fill"></i>
                     <span>Subjects</span>
                 </a>
                 {% endif %}
-                <a href="{{ url_for('batches.index') }}" class="nav-link-item {% if 'batches' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('batches.index') }}" class="nav-link-item {% if request.endpoint and 'batches' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-collection-fill"></i>
                     <span>Batches</span>
                 </a>
@@ -66,50 +66,50 @@
 
                 <div class="menu-category">Operations</div>
                 {% if current_user.is_admin() or current_user.is_teacher() %}
-                <a href="{{ url_for('attendance.mark') }}" class="nav-link-item {% if 'attendance' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('attendance.mark') }}" class="nav-link-item {% if request.endpoint and 'attendance' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-calendar-check-fill"></i>
                     <span>Mark Attendance</span>
                 </a>
                 {% else %}
-                <a href="{{ url_for('attendance.report') }}" class="nav-link-item {% if 'attendance' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('attendance.report') }}" class="nav-link-item {% if request.endpoint and 'attendance' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-calendar-check-fill"></i>
                     <span>Attendance Log</span>
                 </a>
                 {% endif %}
-                <a href="{{ url_for('timetable.index') }}" class="nav-link-item {% if 'timetable' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('timetable.index') }}" class="nav-link-item {% if request.endpoint and 'timetable' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-clock-fill"></i>
                     <span>Timetable</span>
                 </a>
-                <a href="{{ url_for('diary.index') }}" class="nav-link-item {% if 'diary' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('diary.index') }}" class="nav-link-item {% if request.endpoint and 'diary' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-journal-bookmark-fill"></i>
                     <span>My Diary</span>
                 </a>
                 {% if not current_user.is_teacher() %}
-                <a href="{{ url_for('fees.index') }}" class="nav-link-item {% if 'fees' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('fees.index') }}" class="nav-link-item {% if request.endpoint and 'fees' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-cash-stack"></i>
                     <span>Fees & Receipts</span>
                 </a>
                 {% endif %}
 
                 <div class="menu-category">Learning & Exams</div>
-                <a href="{{ url_for('exams.index') }}" class="nav-link-item {% if 'exams' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('exams.index') }}" class="nav-link-item {% if request.endpoint and 'exams' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-pencil-square"></i>
                     <span>Exams & Marks</span>
                 </a>
-                <a href="{{ url_for('assignments.index') }}" class="nav-link-item {% if 'assignments' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('assignments.index') }}" class="nav-link-item {% if request.endpoint and 'assignments' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-journal-text"></i>
                     <span>Homework</span>
                 </a>
-                <a href="{{ url_for('materials.index') }}" class="nav-link-item {% if 'materials' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('materials.index') }}" class="nav-link-item {% if request.endpoint and 'materials' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-file-earmark-pdf-fill"></i>
                     <span>Study Materials</span>
                 </a>
-                <a href="{{ url_for('announcements.index') }}" class="nav-link-item {% if 'announcements' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('announcements.index') }}" class="nav-link-item {% if request.endpoint and 'announcements' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-megaphone-fill"></i>
                     <span>Announcements</span>
                 </a>
                 {% if current_user.is_teacher() or current_user.is_admin() %}
-                <a href="{{ url_for('teachers.compose_email') }}" class="nav-link-item {% if 'compose_email' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('teachers.compose_email') }}" class="nav-link-item {% if request.endpoint and 'compose_email' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-envelope-paper-fill"></i>
                     <span>Parent Email</span>
                 </a>
@@ -117,20 +117,24 @@
 
                 {% if current_user.is_admin() %}
                 <div class="menu-category">Administration</div>
-                <a href="{{ url_for('admissions.index') }}" class="nav-link-item {% if 'admissions' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('requests.admin_index') }}" class="nav-link-item {% if request.endpoint and 'requests' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-inbox-fill"></i>
+                    <span>Request Center</span>
+                </a>
+                <a href="{{ url_for('admissions.index') }}" class="nav-link-item {% if request.endpoint and 'admissions' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-person-plus-fill"></i>
                     <span>Enquiries & CRM</span>
                 </a>
-                <a href="{{ url_for('reports.index') }}" class="nav-link-item {% if 'reports' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('reports.index') }}" class="nav-link-item {% if request.endpoint and 'reports' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-graph-up-arrow"></i>
                     <span>Reports</span>
                 </a>
                 {% if current_user.is_super_admin() %}
-                <a href="{{ url_for('settings.index') }}" class="nav-link-item {% if 'settings' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('settings.index') }}" class="nav-link-item {% if request.endpoint and 'settings' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-sliders"></i>
                     <span>Institute Settings</span>
                 </a>
-                <a href="{{ url_for('audit.index') }}" class="nav-link-item {% if 'audit' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('audit.index') }}" class="nav-link-item {% if request.endpoint and 'audit' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-shield-check"></i>
                     <span>Audit Logs</span>
                 </a>

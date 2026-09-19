@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Request Center - {{ super() }}{% endblock %}
+{% block header_title %}Request Management Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1">
+                <i class="bi bi-shield-check text-primary me-2"></i>Admin Request Control Center
+            </h4>
+            <p class="text-secondary small mb-0">Review, approve, or decline teacher leave applications, schedule changes, and allocation requests.</p>
+        </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-warning-subtle text-warning rounded-3 fs-4">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-medium">Pending Requests</div>
+                        <div class="fs-4 fw-bold text-warning">{{ pending_requests|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-success-subtle text-success rounded-3 fs-4">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-medium">Approved</div>
+                        <div class="fs-4 fw-bold text-success">{{ approved_requests|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-danger-subtle text-danger rounded-3 fs-4">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-medium">Rejected</div>
+                        <div class="fs-4 fw-bold text-danger">{{ rejected_requests|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-primary-subtle text-primary rounded-3 fs-4">
+                        <i class="bi bi-inbox-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-medium">Total All</div>
+                        <div class="fs-4 fw-bold text-dark">{{ all_requests|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Status Tabs -->
+    <ul class="nav nav-pills custom-pills mb-4 border-bottom pb-2" id="requestTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold me-2 rounded-3" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-panel" type="button" role="tab">
+                <i class="bi bi-clock me-1"></i> Pending (<span id="pending-count">{{ pending_requests|length }}</span>)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold me-2 rounded-3" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved-panel" type="button" role="tab">
+                <i class="bi bi-check-circle me-1"></i> Approved (<span id="approved-count">{{ approved_requests|length }}</span>)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold me-2 rounded-3" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected-panel" type="button" role="tab">
+                <i class="bi bi-x-circle me-1"></i> Rejected (<span id="rejected-count">{{ rejected_requests|length }}</span>)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold rounded-3" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-panel" type="button" role="tab">
+                <i class="bi bi-collection me-1"></i> All Requests
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content Panels -->
+    <div class="tab-content" id="requestTabsContent">
+        <!-- PENDING REQUESTS PANEL -->
+        <div class="tab-pane fade show active" id="pending-panel" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-0">
+                    {% if pending_requests %}
+                    {% include 'requests/_request_table.html' with context %}
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-check2-all fs-1 text-success d-block mb-2"></i>
+                        <h6 class="fw-bold text-dark">No Pending Requests</h6>
+                        <p class="small mb-0">All teacher submissions have been processed.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- APPROVED REQUESTS PANEL -->
+        <div class="tab-pane fade" id="approved-panel" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-0">
+                    {% set req_list = approved_requests %}
+                    {% include 'requests/_request_list_readonly.html' %}
+                </div>
+            </div>
+        </div>
+
+        <!-- REJECTED REQUESTS PANEL -->
+        <div class="tab-pane fade" id="rejected-panel" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-0">
+                    {% set req_list = rejected_requests %}
+                    {% include 'requests/_request_list_readonly.html' %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ALL REQUESTS PANEL -->
+        <div class="tab-pane fade" id="all-panel" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-0">
+                    {% set req_list = all_requests %}
+                    {% include 'requests/_request_list_readonly.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Process Request Modal (Admin Decision) -->
+<div class="modal fade" id="processRequestModal" tabindex="-1" aria-labelledby="processRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-dark text-white p-3">
+                <h5 class="modal-title fw-bold" id="processRequestModalLabel">Process Teacher Request</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="processRequestForm" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="status" id="modal_action_status" value="approved">
+
+                <div class="modal-body p-4">
+                    <div id="modal_request_summary" class="bg-light p-3 rounded-3 mb-3 border">
+                        <div class="fw-bold text-dark mb-1" id="summary_teacher">Teacher Name</div>
+                        <div class="badge bg-secondary mb-2" id="summary_type">Category</div>
+                        <div class="small text-secondary" id="summary_title">Request Title</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Decision <span class="text-danger">*</span></label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="status_toggle" id="toggleApprove" value="approved" checked onchange="updateDecisionStatus('approved')">
+                            <label class="btn btn-outline-success fw-bold py-2" for="toggleApprove"><i class="bi bi-check-circle me-1"></i> Approve</label>
+
+                            <input type="radio" class="btn-check" name="status_toggle" id="toggleReject" value="rejected" onchange="updateDecisionStatus('rejected')">
+                            <label class="btn btn-outline-danger fw-bold py-2" for="toggleReject"><i class="bi bi-x-circle me-1"></i> Reject</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Admin Response / Remarks</label>
+                        <textarea name="admin_response" id="modal_admin_response" rows="3" class="form-control rounded-3" placeholder="Provide comments or notification details for the teacher..."></textarea>
+                    </div>
+
+                    <div class="alert alert-info py-2 small mb-0 rounded-3" id="approval_notice">
+                        <i class="bi bi-info-circle me-1"></i> Approving this request will automatically apply schedule changes, register leave dates, or trigger notification emails if applicable.
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light p-3">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-semibold px-4 rounded-3" id="processSubmitBtn"><i class="bi bi-check-lg me-1"></i> Confirm Decision</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Request & Reassign Approval Modal -->
+<div class="modal fade" id="editRequestModal" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-primary text-white p-3">
+                <h5 class="modal-title fw-bold" id="editRequestModalLabel"><i class="bi bi-pencil-square me-2"></i>Edit Request & Reassign Approval</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editRequestForm" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Assigned Faculty / Teacher <span class="text-danger">*</span></label>
+                            <select name="teacher_id" id="edit_teacher_id" class="form-select rounded-3" required>
+                                {% for t in teachers %}
+                                <option value="{{ t.id }}">{{ t.full_name }} (Code: {{ t.teacher_code }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Change teacher assignment or approval faculty if required.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Approval Status <span class="text-danger">*</span></label>
+                            <select name="status" id="edit_status" class="form-select rounded-3" required>
+                                <option value="approved">Approved</option>
+                                <option value="pending">Pending</option>
+                                <option value="under_review">Under Review</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark">Target Class</label>
+                            <select name="target_class_id" id="edit_class_id" class="form-select rounded-3">
+                                <option value="">-- Select Class --</option>
+                                {% for c in classes %}
+                                <option value="{{ c.id }}">{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark">Target Batch</label>
+                            <select name="target_batch_id" id="edit_batch_id" class="form-select rounded-3">
+                                <option value="">-- Select Batch --</option>
+                                {% for b in batches %}
+                                <option value="{{ b.id }}">{{ b.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark">Target Subject</label>
+                            <select name="target_subject_id" id="edit_subject_id" class="form-select rounded-3">
+                                <option value="">-- Select Subject --</option>
+                                {% for s in subjects %}
+                                <option value="{{ s.id }}">{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Proposed / Rescheduled Date</label>
+                            <input type="date" name="proposed_date" id="edit_proposed_date" class="form-control rounded-3">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Proposed / Rescheduled Time</label>
+                            <input type="time" name="proposed_time" id="edit_proposed_time" class="form-control rounded-3">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Leave Start Date</label>
+                            <input type="date" name="start_date" id="edit_start_date" class="form-control rounded-3">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Leave End Date</label>
+                            <input type="date" name="end_date" id="edit_end_date" class="form-control rounded-3">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-dark">Admin Response / Remarks</label>
+                        <textarea name="admin_response" id="edit_admin_response" rows="3" class="form-control rounded-3" placeholder="Provide administrative notes for teacher & students..."></textarea>
+                    </div>
+
+                    <div class="alert alert-warning py-2 small mb-0 rounded-3">
+                        <i class="bi bi-envelope-check me-1"></i> <strong>Automated Notifications:</strong> Saving changes will re-process approval schedules and automatically send email notifications to the assigned teacher and all enrolled students of the target class/batch.
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light p-3">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-semibold px-4 rounded-3"><i class="bi bi-save me-1"></i> Save Changes & Notify</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openProcessModal(reqId, teacherName, reqType, title, currentStatus) {
+    var form = document.getElementById('processRequestForm');
+    form.action = "/requests/process/" + reqId;
+    document.getElementById('summary_teacher').innerText = teacherName;
+    document.getElementById('summary_type').innerText = reqType.replace('_', ' ').toUpperCase();
+    document.getElementById('summary_title').innerText = title;
+    
+    updateDecisionStatus('approved');
+    document.getElementById('toggleApprove').checked = true;
+    
+    var modal = new bootstrap.Modal(document.getElementById('processRequestModal'));
+    modal.show();
+}
+
+function updateDecisionStatus(status) {
+    document.getElementById('modal_action_status').value = status;
+    var btn = document.getElementById('processSubmitBtn');
+    var notice = document.getElementById('approval_notice');
+    
+    if (status === 'approved') {
+        btn.className = "btn btn-success fw-semibold px-4 rounded-3";
+        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Approve & Apply';
+        notice.style.display = 'block';
+    } else {
+        btn.className = "btn btn-danger fw-semibold px-4 rounded-3";
+        btn.innerHTML = '<i class="bi bi-x-lg me-1"></i> Reject Request';
+        notice.style.display = 'none';
+    }
+}
+
+function openEditModal(reqId, teacherId, status, reqType, title, classId, batchId, subjectId, startDate, endDate, proposedDate, proposedTime, adminResponse) {
+    var form = document.getElementById('editRequestForm');
+    form.action = "/requests/admin/" + reqId + "/edit";
+    
+    document.getElementById('edit_teacher_id').value = teacherId || '';
+    document.getElementById('edit_status').value = status || 'approved';
+    document.getElementById('edit_class_id').value = classId || '';
+    document.getElementById('edit_batch_id').value = batchId || '';
+    document.getElementById('edit_subject_id').value = subjectId || '';
+    document.getElementById('edit_start_date').value = startDate || '';
+    document.getElementById('edit_end_date').value = endDate || '';
+    document.getElementById('edit_proposed_date').value = proposedDate || '';
+    document.getElementById('edit_proposed_time').value = proposedTime || '';
+    document.getElementById('edit_admin_response').value = adminResponse || '';
+    
+    var modal = new bootstrap.Modal(document.getElementById('editRequestModal'));
+    modal.show();
+}
+</script>
+{% endblock %}
+

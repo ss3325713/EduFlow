@@ -1,0 +1,94 @@
+{% if req_list %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th class="ps-3">Teacher</th>
+                <th>Category & Title</th>
+                <th>Parameters</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th>Admin Notes</th>
+                <th class="pe-3 text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in req_list %}
+            <tr>
+                <td class="ps-3">
+                    <div class="fw-bold text-dark">{{ r.teacher.user.full_name if r.teacher and r.teacher.user else 'Teacher #' ~ r.teacher_id }}</div>
+                    <div class="text-muted small">Code: <span class="badge bg-light text-dark border">{{ r.teacher.teacher_code if r.teacher else 'N/A' }}</span></div>
+                </td>
+                <td>
+                    <div>
+                        {% if r.request_type == 'leave' %}
+                            <span class="badge bg-danger-subtle text-danger border"><i class="bi bi-calendar-minus me-1"></i>Leave</span>
+                        {% elif r.request_type == 'schedule_change' %}
+                            <span class="badge bg-primary-subtle text-primary border"><i class="bi bi-clock-history me-1"></i>Schedule Change</span>
+                        {% elif r.request_type == 'batch_allocation' %}
+                            <span class="badge bg-info-subtle text-info border"><i class="bi bi-diagram-3 me-1"></i>Batch Allocation</span>
+                        {% elif r.request_type == 'schedule_new_class' %}
+                            <span class="badge bg-purple-subtle text-purple border" style="background:#f3e8ff; color:#6b21a8;"><i class="bi bi-calendar-plus me-1"></i>New Class</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary border"><i class="bi bi-chat-dots me-1"></i>Other</span>
+                        {% endif %}
+                        <strong class="text-dark d-block mt-1">{{ r.title }}</strong>
+                    </div>
+                    <div class="text-secondary small text-truncate" style="max-width: 250px;" title="{{ r.description }}">{{ r.description }}</div>
+                </td>
+                <td class="small">
+                    {% if r.request_type == 'leave' %}
+                        <div><strong>Dates:</strong> {{ r.start_date }} to {{ r.end_date }}</div>
+                    {% elif r.request_type == 'schedule_change' %}
+                        <div><strong>Action:</strong> {{ r.change_action|upper if r.change_action else 'CHANGE' }}</div>
+                        {% if r.proposed_date %}
+                        <div>Proposed: {{ r.proposed_date }} {{ r.proposed_time }}</div>
+                        {% endif %}
+                    {% elif r.request_type == 'batch_allocation' %}
+                        <div>Action: {{ r.allocation_action|title if r.allocation_action else 'Request' }}</div>
+                    {% elif r.request_type == 'schedule_new_class' %}
+                        <div>Proposed: {{ r.proposed_date }} {{ r.proposed_time }}</div>
+                    {% else %}
+                        <span class="text-muted">Inquiry</span>
+                    {% endif %}
+                </td>
+                <td class="small text-muted text-nowrap">
+                    {{ r.created_at.strftime('%b %d, %Y') if r.created_at else '-' }}
+                </td>
+                <td>
+                    {% if r.status == 'approved' %}
+                    <span class="badge bg-success-subtle text-success border px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Approved</span>
+                    {% elif r.status == 'rejected' %}
+                    <span class="badge bg-danger-subtle text-danger border px-2 py-1"><i class="bi bi-x-circle-fill me-1"></i>Rejected</span>
+                    {% else %}
+                    <span class="badge bg-warning-subtle text-warning border px-2 py-1"><i class="bi bi-clock-fill me-1"></i>Pending</span>
+                    {% endif %}
+                </td>
+                <td class="small" style="max-width: 200px;">
+                    {% if r.admin_response %}
+                    <div class="text-dark bg-light p-2 rounded border" style="font-size: 0.8rem;">
+                        <strong>Admin:</strong> {{ r.admin_response }}
+                        {% if r.processed_at %}
+                        <div class="text-muted fs-xs mt-1">{{ r.processed_at.strftime('%b %d, %I:%M %p') }}</div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td class="pe-3 text-end">
+                    <button class="btn btn-sm btn-outline-primary rounded-3 px-2 py-1 shadow-xs" onclick="openEditModal({{ r.id }}, {{ r.teacher_id }}, '{{ r.status }}', '{{ r.request_type }}', '{{ r.title|e if r.title else '' }}', '{{ r.target_class_id or '' }}', '{{ r.target_batch_id or '' }}', '{{ r.target_subject_id or '' }}', '{{ r.start_date or '' }}', '{{ r.end_date or '' }}', '{{ r.proposed_date or '' }}', '{{ r.proposed_time or '' }}', '{{ r.admin_response|e if r.admin_response else '' }}')">
+                        <i class="bi bi-pencil-square me-1"></i> Edit & Notify
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-inbox fs-1 d-block text-secondary mb-2"></i>
+    <h6 class="fw-bold text-dark">No Records Found</h6>
+</div>
+{% endif %}

@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Request Center - {{ super() }}{% endblock %}
+{% block header_title %}Request Center{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Page Header -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1">
+                <i class="bi bi-send-fill text-primary me-2"></i>Teacher Request Center
+            </h4>
+            <p class="text-secondary small mb-0">Submit and track your leaves, schedule modifications, batch allocations, and inquiries.</p>
+        </div>
+        <button class="btn btn-primary fw-semibold shadow-sm align-self-start align-self-sm-auto px-3 py-2 rounded-3" data-bs-toggle="modal" data-bs-target="#submitRequestModal">
+            <i class="bi bi-plus-circle-fill me-1"></i> Submit New Request
+        </button>
+    </div>
+
+    <!-- Request Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-primary-subtle text-primary rounded-3 fs-4">
+                        <i class="bi bi-collection-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-medium">Total Requests</div>
+                        <div class="fs-4 fw-bold text-dark">{{ requests|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-warning-subtle text-warning rounded-3 fs-4">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-medium">Pending</div>
+                        <div class="fs-4 fw-bold text-warning">{{ requests|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-success-subtle text-success rounded-3 fs-4">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-medium">Approved</div>
+                        <div class="fs-4 fw-bold text-success">{{ requests|selectattr('status', 'equalto', 'approved')|list|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 bg-danger-subtle text-danger rounded-3 fs-4">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small fw-medium">Rejected</div>
+                        <div class="fs-4 fw-bold text-danger">{{ requests|selectattr('status', 'equalto', 'rejected')|list|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request History List -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-body border-bottom p-3 d-flex align-items-center justify-content-between">
+            <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-list-task me-2 text-primary"></i>My Submitted Requests</h6>
+            <span class="badge bg-light text-secondary border">{{ requests|length }} Record(s)</span>
+        </div>
+        <div class="card-body p-0">
+            {% if requests %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Category & Title</th>
+                            <th>Specific Details</th>
+                            <th>Submitted Date</th>
+                            <th>Attachment</th>
+                            <th>Status</th>
+                            <th class="pe-3">Admin Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in requests %}
+                        <tr>
+                            <td class="ps-3">
+                                <div>
+                                    {% if r.request_type == 'leave' %}
+                                        <span class="badge bg-danger-subtle text-danger border me-1"><i class="bi bi-calendar-minus me-1"></i>Leave</span>
+                                    {% elif r.request_type == 'schedule_change' %}
+                                        <span class="badge bg-primary-subtle text-primary border me-1"><i class="bi bi-clock-history me-1"></i>Schedule Change</span>
+                                    {% elif r.request_type == 'batch_allocation' %}
+                                        <span class="badge bg-info-subtle text-info border me-1"><i class="bi bi-diagram-3 me-1"></i>Batch Allocation</span>
+                                    {% elif r.request_type == 'schedule_new_class' %}
+                                        <span class="badge bg-purple-subtle text-purple border me-1" style="background:#f3e8ff; color:#6b21a8;"><i class="bi bi-calendar-plus me-1"></i>New Class</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary-subtle text-secondary border me-1"><i class="bi bi-chat-dots me-1"></i>Other</span>
+                                    {% endif %}
+                                    <strong class="text-dark d-block mt-1">{{ r.title }}</strong>
+                                </div>
+                                <div class="text-secondary small text-truncate" style="max-width: 250px;" title="{{ r.description }}">{{ r.description }}</div>
+                            </td>
+                            <td>
+                                <div class="small">
+                                {% if r.request_type == 'leave' %}
+                                    <div><i class="bi bi-calendar3 me-1 text-muted"></i><strong>Dates:</strong> {{ r.start_date }} to {{ r.end_date }}</div>
+                                {% elif r.request_type == 'schedule_change' %}
+                                    <div><i class="bi bi-arrow-repeat me-1 text-muted"></i><strong>Action:</strong> {{ r.change_action|upper if r.change_action else 'MODIFICATION' }}</div>
+                                    {% if r.timetable %}
+                                    <div class="text-muted"><i class="bi bi-book me-1"></i>{{ r.timetable.batch.batch_name }} - {{ r.timetable.subject.subject_name }}</div>
+                                    {% endif %}
+                                    {% if r.proposed_date %}
+                                    <div><i class="bi bi-clock me-1 text-muted"></i>Proposed: {{ r.proposed_date }} at {{ r.proposed_time }}</div>
+                                    {% endif %}
+                                {% elif r.request_type == 'batch_allocation' %}
+                                    <div><i class="bi bi-layers me-1 text-muted"></i>Action: {{ r.allocation_action|title if r.allocation_action else 'Request' }}</div>
+                                    {% if r.target_class %}<div>Class: {{ r.target_class.class_name }}</div>{% endif %}
+                                    {% if r.target_batch %}<div>Batch: {{ r.target_batch.batch_name }}</div>{% endif %}
+                                    {% if r.target_subject %}<div>Subject: {{ r.target_subject.subject_name }}</div>{% endif %}
+                                {% elif r.request_type == 'schedule_new_class' %}
+                                    <div><i class="bi bi-calendar-plus me-1 text-muted"></i>Proposed Date: {{ r.proposed_date }} at {{ r.proposed_time }}</div>
+                                    <div>Duration: {{ r.duration_minutes }} min</div>
+                                    {% if r.target_batch %}<div>Batch: {{ r.target_batch.batch_name }}</div>{% endif %}
+                                {% else %}
+                                    <span class="text-muted">Standard Inquiry</span>
+                                {% endif %}
+                                </div>
+                            </td>
+                            <td class="small text-muted text-nowrap">
+                                {{ r.created_at.strftime('%b %d, %Y %I:%M %p') if r.created_at else '-' }}
+                            </td>
+                            <td>
+                                {% if r.attachment_path %}
+                                <a href="{{ url_for('static', filename=r.attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary py-1 px-2 rounded-2">
+                                    <i class="bi bi-paperclip me-1"></i>View
+                                </a>
+                                {% else %}
+                                <span class="text-muted small">None</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if r.status == 'approved' %}
+                                <span class="badge bg-success-subtle text-success border px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Approved</span>
+                                {% elif r.status == 'rejected' %}
+                                <span class="badge bg-danger-subtle text-danger border px-2 py-1"><i class="bi bi-x-circle-fill me-1"></i>Rejected</span>
+                                {% else %}
+                                <span class="badge bg-warning-subtle text-warning border px-2 py-1"><i class="bi bi-clock-fill me-1"></i>Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-3 small" style="max-width: 200px;">
+                                {% if r.admin_response %}
+                                <div class="text-dark bg-light p-2 rounded border" style="font-size: 0.8rem;">
+                                    <strong>Admin:</strong> {{ r.admin_response }}
+                                    {% if r.processed_at %}
+                                    <div class="text-muted fs-xs mt-1">{{ r.processed_at.strftime('%b %d, %I:%M %p') }}</div>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 d-block text-secondary mb-2"></i>
+                <h6 class="fw-bold text-dark">No Requests Submitted Yet</h6>
+                <p class="text-secondary small mb-3">Click below to submit your leave or schedule modification requests.</p>
+                <button class="btn btn-primary btn-sm rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#submitRequestModal">
+                    <i class="bi bi-plus-circle me-1"></i> Submit Request
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Submit Request Modal with Dynamic Forms -->
+<div class="modal fade" id="submitRequestModal" tabindex="-1" aria-labelledby="submitRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-primary text-white p-3">
+                <h5 class="modal-title fw-bold" id="submitRequestModalLabel"><i class="bi bi-send me-2"></i>Submit New Request</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('teachers.submit_request') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="modal-body p-4">
+                    <!-- Request Category Selector -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">Select Request Category <span class="text-danger">*</span></label>
+                        <select name="request_type" id="requestCategorySelect" class="form-select form-select-lg rounded-3 border-primary shadow-sm" required onchange="toggleCategoryFields()">
+                            <option value="leave" selected>1. Leave Request (Absence / Medical / Casual)</option>
+                            <option value="schedule_change">2. Schedule Change (Cancel / Reschedule Existing Class)</option>
+                            <option value="batch_allocation">3. Batch/Class Allocation (Request Batch Assignment/Removal)</option>
+                            <option value="schedule_new_class">4. Schedule a New Class (Extra Class / Special Session)</option>
+                            <option value="other">5. Other Administrative Inquiry</option>
+                        </select>
+                    </div>
+
+                    <!-- Category 1: Leave Request -->
+                    <div id="fields_leave" class="category-fields bg-light p-3 rounded-3 mb-3 border">
+                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-calendar-minus me-1"></i> Leave Details</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Leave Start Date <span class="text-danger">*</span></label>
+                                <input type="date" name="start_date" id="leave_start_date" class="form-control rounded-3" value="{{ today }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Leave End Date <span class="text-danger">*</span></label>
+                                <input type="date" name="end_date" id="leave_end_date" class="form-control rounded-3" value="{{ today }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category 2: Schedule Change -->
+                    <div id="fields_schedule_change" class="category-fields bg-light p-3 rounded-3 mb-3 border" style="display:none;">
+                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-clock-history me-1"></i> Schedule Change Details</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Action Requested <span class="text-danger">*</span></label>
+                                <select name="change_action" class="form-select rounded-3">
+                                    <option value="cancel">Cancel Scheduled Class</option>
+                                    <option value="reschedule">Reschedule Scheduled Class</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Select Scheduled Class <span class="text-danger">*</span></label>
+                                <select name="timetable_id" class="form-select rounded-3">
+                                    <option value="">-- Choose Class Timetable Entry --</option>
+                                    {% for tt in my_timetables %}
+                                    <option value="{{ tt.id }}">{{ tt.day_of_week }} | {{ tt.batch.batch_name }} - {{ tt.subject.subject_name }} ({{ tt.start_time.strftime('%I:%M %p') }} - {{ tt.end_time.strftime('%I:%M %p') }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Proposed Rescheduled Date (If Rescheduling)</label>
+                                <input type="date" name="proposed_date" class="form-control rounded-3">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Proposed Rescheduled Time</label>
+                                <input type="time" name="proposed_time" class="form-control rounded-3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category 3: Batch/Class Allocation -->
+                    <div id="fields_batch_allocation" class="category-fields bg-light p-3 rounded-3 mb-3 border" style="display:none;">
+                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-diagram-3 me-1"></i> Batch / Subject Allocation Request</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Allocation Action</label>
+                                <select name="allocation_action" class="form-select rounded-3">
+                                    <option value="assign">Request Assignment To Batch</option>
+                                    <option value="unassign">Request Removal From Batch</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Select Target Class</label>
+                                <select name="target_class_id" class="form-select rounded-3">
+                                    <option value="">-- Select Class --</option>
+                                    {% for c in all_classes %}
+                                    <option value="{{ c.id }}">{{ c.class_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Select Target Batch</label>
+                                <select name="target_batch_id" class="form-select rounded-3">
+                                    <option value="">-- Select Batch --</option>
+                                    {% for b in all_batches %}
+                                    <option value="{{ b.id }}">{{ b.batch_name }} ({{ b.course_class.class_name if b.course_class else 'N/A' }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Select Target Subject</label>
+                                <select name="target_subject_id" class="form-select rounded-3">
+                                    <option value="">-- Select Subject --</option>
+                                    {% for s in all_subjects %}
+                                    <option value="{{ s.id }}">{{ s.subject_name }} ({{ s.subject_code }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category 4: Schedule a New Class -->
+                    <div id="fields_schedule_new_class" class="category-fields bg-light p-3 rounded-3 mb-3 border" style="display:none;">
+                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-calendar-plus me-1"></i> Extra / New Class Details</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Select Target Batch <span class="text-danger">*</span></label>
+                                <select name="target_batch_id_new" class="form-select rounded-3">
+                                    <option value="">-- Select Batch --</option>
+                                    {% for b in all_batches %}
+                                    <option value="{{ b.id }}">{{ b.batch_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Select Target Subject <span class="text-danger">*</span></label>
+                                <select name="target_subject_id_new" class="form-select rounded-3">
+                                    <option value="">-- Select Subject --</option>
+                                    {% for s in all_subjects %}
+                                    <option value="{{ s.id }}">{{ s.subject_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Date <span class="text-danger">*</span></label>
+                                <input type="date" name="proposed_date_new" class="form-control rounded-3">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Time <span class="text-danger">*</span></label>
+                                <input type="time" name="proposed_time_new" class="form-control rounded-3">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Duration (Minutes)</label>
+                                <input type="number" name="duration_minutes" class="form-control rounded-3" value="60" min="15" step="15">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category 5: Common Description & Title -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Subject / Short Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control rounded-3" placeholder="e.g. Leave for Medical Checkup / Extra Math Revision Session" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Detailed Description & Reason <span class="text-danger">*</span></label>
+                        <textarea name="description" rows="3" class="form-control rounded-3" placeholder="Explain the context, justification, or any special instructions for the administrator..." required></textarea>
+                    </div>
+
+                    <!-- Optional File Attachment -->
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold">Optional Attachment (Medical Certificate / Document / PDF)</label>
+                        <input type="file" name="attachment" class="form-control rounded-3" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
+                        <div class="form-text">Supported formats: PDF, PNG, JPG, DOC. Max size 5MB.</div>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light p-3">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-semibold px-4 rounded-3"><i class="bi bi-send me-1"></i> Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCategoryFields() {
+    var cat = document.getElementById('requestCategorySelect').value;
+    var sections = ['leave', 'schedule_change', 'batch_allocation', 'schedule_new_class'];
+    sections.forEach(function(s) {
+        var el = document.getElementById('fields_' + s);
+        if (el) {
+            el.style.display = (cat === s) ? 'block' : 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

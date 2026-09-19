@@ -73,3 +73,80 @@ class Notification(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
+
+class TeacherRequest(db.Model):
+    __tablename__ = 'teacher_requests'
+
+    id = db.Column(db.Integer, primary_key=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id', ondelete='CASCADE'), nullable=False, index=True)
+    request_type = db.Column(db.String(50), nullable=False, default='other')  # leave, schedule_change, batch_allocation, new_class, other
+    title = db.Column(db.String(128), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending', nullable=False, index=True)  # pending, under_review, approved, rejected, completed
+    admin_response = db.Column(db.Text, nullable=True)
+
+    # Category Specific Fields
+    # Leave Request
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
+
+    # Schedule Change Request
+    timetable_id = db.Column(db.Integer, db.ForeignKey('timetables.id', ondelete='SET NULL'), nullable=True)
+    change_action = db.Column(db.String(20), nullable=True)  # change_time, postpone, cancel
+
+    # Allocation & New Class Request
+    target_class_id = db.Column(db.Integer, db.ForeignKey('classes.id', ondelete='SET NULL'), nullable=True)
+    target_batch_id = db.Column(db.Integer, db.ForeignKey('batches.id', ondelete='SET NULL'), nullable=True)
+    target_subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id', ondelete='SET NULL'), nullable=True)
+    allocation_action = db.Column(db.String(20), nullable=True)  # assign, remove
+
+    # Proposed timing (Schedule Change or New Class)
+    proposed_date = db.Column(db.Date, nullable=True)
+    proposed_time = db.Column(db.Time, nullable=True)
+    duration_minutes = db.Column(db.Integer, nullable=True, default=60)
+    attachment_path = db.Column(db.String(256), nullable=True)
+
+    # Processing metadata
+    processed_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    processed_at = db.Column(db.DateTime, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    teacher = db.relationship('Teacher', backref=db.backref('requests', lazy='dynamic', cascade='all, delete-orphan'))
+    timetable = db.relationship('Timetable')
+    target_class = db.relationship('Class')
+    target_batch = db.relationship('Batch')
+    target_subject = db.relationship('Subject')
+    processed_by_user = db.relationship('User', foreign_keys=[processed_by_user_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'teacher_id': self.teacher_id,
+            'teacher_name': self.teacher.full_name if self.teacher and self.teacher.user else 'Teacher',
+            'teacher_code': self.teacher.teacher_code if self.teacher else '',
+            'request_type': self.request_type,
+            'title': self.title,
+            'description': self.description,
+            'status': self.status,
+            'admin_response': self.admin_response,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
+            'timetable_id': self.timetable_id,
+            'change_action': self.change_action,
+            'target_class_name': self.target_class.name if self.target_class else None,
+            'target_batch_name': self.target_batch.name if self.target_batch else None,
+            'target_subject_name': self.target_subject.name if self.target_subject else None,
+            'proposed_date': self.proposed_date.isoformat() if self.proposed_date else None,
+            'proposed_time': self.proposed_time.strftime('%H:%M') if self.proposed_time else None,
+            'duration_minutes': self.duration_minutes,
+            'attachment_path': self.attachment_path,
+            'processed_by': self.processed_by_user.full_name if self.processed_by_user else None,
+            'processed_at': self.processed_at.strftime('%Y-%m-%d %H:%M') if self.processed_at else None,
+            'created_at': self.created_at.strftime('%Y-%m-%d %I:%M %p') if self.created_at else None,
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %I:%M %p') if self.updated_at else None
+        }
+
+
