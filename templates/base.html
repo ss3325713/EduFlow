@@ -80,6 +80,10 @@
                     <i class="bi bi-clock-fill"></i>
                     <span>Timetable</span>
                 </a>
+                <a href="{{ url_for('diary.index') }}" class="nav-link-item {% if 'diary' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-journal-bookmark-fill"></i>
+                    <span>My Diary</span>
+                </a>
                 {% if not current_user.is_teacher() %}
                 <a href="{{ url_for('fees.index') }}" class="nav-link-item {% if 'fees' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-cash-stack"></i>
@@ -146,7 +150,61 @@
                     <h5 class="mb-0 fw-bold text-dark d-none d-sm-block">{% block header_title %}Overview{% endblock %}</h5>
                 </div>
 
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Notification Bell Dropdown -->
+                    <div class="dropdown me-1">
+                        <button class="btn btn-light position-relative rounded-circle p-2 d-flex align-items-center justify-content-center" 
+                                type="button" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="width: 40px; height: 40px;">
+                            <i class="bi bi-bell-fill text-secondary fs-5"></i>
+                            <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {% if not unread_notifications_count or unread_notifications_count == 0 %}d-none{% endif %}" style="font-size: 0.65rem;">
+                                {{ unread_notifications_count if unread_notifications_count else 0 }}
+                            </span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0" aria-labelledby="notifDropdown" style="width: 360px; max-width: 92vw; border-radius: 12px; overflow: hidden;">
+                            <div class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-bell me-1 text-primary"></i> Notifications</h6>
+                                    <span id="notifCountPill" class="badge bg-primary-subtle text-primary rounded-pill small">{{ unread_notifications_count if unread_notifications_count else 0 }} unread</span>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" data-bs-toggle="dropdown" title="Options">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end small shadow-sm">
+                                        <li><a class="dropdown-item text-primary" href="#" onclick="event.preventDefault(); markAllNotificationsRead();"><i class="bi bi-check2-all me-1"></i> Mark All as Read</a></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); clearAllNotifications();"><i class="bi bi-trash me-1"></i> Clear All</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="px-3 pt-2 bg-white border-bottom">
+                                <ul class="nav nav-pills nav-fill small" id="notifFilterTabs">
+                                    <li class="nav-item">
+                                        <button class="nav-link py-1 px-2 active small btn-notif-tab" onclick="switchNotifTab(this, 'all')">All</button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link py-1 px-2 small btn-notif-tab" onclick="switchNotifTab(this, 'unread')">Unread</button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link py-1 px-2 small btn-notif-tab" onclick="switchNotifTab(this, 'read')">Read</button>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div id="notifListContainer" class="list-group list-group-flush overflow-auto" style="max-height: 340px;">
+                                <div class="text-center p-4 text-muted small">
+                                    <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                                    <div>Loading notifications...</div>
+                                </div>
+                            </div>
+
+                            <div class="p-2 bg-light border-top text-center">
+                                <a href="{{ url_for('notifications.index') }}" class="small fw-semibold text-primary text-decoration-none">View All Notifications <i class="bi bi-arrow-right ms-1"></i></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Profile Dropdown -->
                     <div class="dropdown">
                         <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
                             <div class="user-avatar">
@@ -196,6 +254,172 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <script>
+    let currentNotifFilter = 'all';
+
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) return meta.getAttribute('content');
+        return '{{ csrf_token() if csrf_token else "" }}';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const notifDropdownEl = document.getElementById('notifDropdown');
+        if (notifDropdownEl) {
+            notifDropdownEl.addEventListener('show.bs.dropdown', function () {
+                loadNotifications(currentNotifFilter);
+            });
+        }
+    });
+
+    function updateNotifBadge(count) {
+        const badge = document.getElementById('notifBadge');
+        const pill = document.getElementById('notifCountPill');
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('d-none');
+            } else {
+                badge.classList.add('d-none');
+            }
+        }
+        if (pill) {
+            pill.textContent = count + ' unread';
+        }
+    }
+
+    function switchNotifTab(btn, filter) {
+        currentNotifFilter = filter;
+        document.querySelectorAll('.btn-notif-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadNotifications(filter);
+    }
+
+    function loadNotifications(filter = 'all') {
+        const container = document.getElementById('notifListContainer');
+        if (!container) return;
+        
+        fetch('/notifications/api/list?filter=' + filter)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) return;
+                updateNotifBadge(data.unread_count);
+                
+                if (data.notifications.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center p-4 text-muted small">
+                            <i class="bi bi-bell-slash fs-4 d-block mb-1 text-secondary"></i>
+                            <div>No notifications found</div>
+                        </div>`;
+                    return;
+                }
+
+                let html = '';
+                data.notifications.forEach(n => {
+                    const isUnread = !n.is_read;
+                    const itemBg = isUnread ? 'bg-primary-subtle bg-opacity-10' : '';
+                    const dotClass = isUnread ? 'bg-primary' : 'bg-secondary opacity-25';
+                    const dateStr = n.created_at ? new Date(n.created_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+
+                    html += `
+                        <div class="list-group-item list-group-item-action border-bottom p-3 ${itemBg} position-relative text-start" id="notif-item-${n.id}">
+                            <div class="d-flex align-items-start justify-content-between gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="rounded-circle d-inline-block ${dotClass}" style="width: 8px; height: 8px; flex-shrink: 0;"></span>
+                                    <h6 class="mb-0 fw-bold small text-dark ${isUnread ? '' : 'text-muted'}">${escapeHtml(n.title)}</h6>
+                                </div>
+                                <span class="text-muted text-nowrap" style="font-size: 0.7rem;">${dateStr}</span>
+                            </div>
+                            <p class="mb-1 text-secondary small mt-1" style="font-size: 0.8rem; line-height: 1.3;">${escapeHtml(n.message)}</p>
+                            
+                            <div class="d-flex align-items-center justify-content-between mt-2 pt-1 border-top border-light">
+                                <div>
+                                    ${n.link ? `<a href="${n.link}" class="btn btn-sm btn-link p-0 text-primary small fw-semibold text-decoration-none" style="font-size: 0.75rem;">View <i class="bi bi-arrow-right"></i></a>` : ''}
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    ${isUnread ? `<button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 small" style="font-size: 0.7rem;" onclick="markNotifRead(event, ${n.id})">Mark as Read</button>` : ''}
+                                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 border-0 text-muted" style="font-size: 0.75rem;" title="Delete" onclick="deleteNotif(event, ${n.id})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                container.innerHTML = html;
+            })
+            .catch(err => console.error("Error loading notifications:", err));
+    }
+
+    function markNotifRead(e, id) {
+        if(e) e.stopPropagation();
+        fetch(`/notifications/api/${id}/read`, {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCsrfToken()}
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                loadNotifications(currentNotifFilter);
+            }
+        });
+    }
+
+    function deleteNotif(e, id) {
+        if(e) e.stopPropagation();
+        fetch(`/notifications/api/${id}/delete`, {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCsrfToken()}
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const el = document.getElementById(`notif-item-${id}`);
+                if (el) el.remove();
+                updateNotifBadge(data.unread_count);
+                loadNotifications(currentNotifFilter);
+            }
+        });
+    }
+
+    function markAllNotificationsRead() {
+        fetch('/notifications/api/mark-all-read', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCsrfToken()}
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                updateNotifBadge(0);
+                loadNotifications(currentNotifFilter);
+            }
+        });
+    }
+
+    function clearAllNotifications() {
+        if (!confirm("Are you sure you want to clear all notifications? This action cannot be undone.")) return;
+        fetch('/notifications/api/clear-all', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCsrfToken()}
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                updateNotifBadge(0);
+                loadNotifications(currentNotifFilter);
+            }
+        });
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text.replace(/&/g, "&amp;")
+                   .replace(/</g, "&lt;")
+                   .replace(/>/g, "&gt;")
+                   .replace(/"/g, "&quot;")
+                   .replace(/'/g, "&#039;");
+    }
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

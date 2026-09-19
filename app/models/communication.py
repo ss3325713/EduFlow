@@ -39,12 +39,25 @@ class Notification(db.Model):
     __tablename__ = 'notifications'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     title = db.Column(db.String(128), nullable=False)
     message = db.Column(db.Text, nullable=False)
     link = db.Column(db.String(256), nullable=True)
-    is_read = db.Column(db.Boolean, default=False, nullable=False)
+    is_read = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    read_at = db.Column(db.DateTime, nullable=True)
+    is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    deleted_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def mark_as_read(self):
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = datetime.utcnow()
+
+    def mark_as_deleted(self):
+        if not self.is_deleted:
+            self.is_deleted = True
+            self.deleted_at = datetime.utcnow()
 
     def to_dict(self):
         return {
@@ -54,5 +67,9 @@ class Notification(db.Model):
             'message': self.message,
             'link': self.link,
             'is_read': self.is_read,
+            'read_at': self.read_at.isoformat() if self.read_at else None,
+            'is_deleted': self.is_deleted,
+            'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+

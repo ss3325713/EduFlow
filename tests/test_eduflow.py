@@ -525,5 +525,213 @@ def test_teacher_parent_email_authorization(app_instance, client):
             assert b'Permission Denied: You are not authorized to email parents of this student' in res_unauth.data
 
 
+def test_diary_feature_comprehensive(app_instance):
+    from datetime import date
+    from app.models import User, Role, DiaryEntry
+    from app.diary.encryption import decrypt_diary_content
+
+    with app_instance.app_context():
+        user_a = User(username='diaryusera', email='usera@test.com', first_name='Alice', last_name='User', role=Role.STUDENT, is_active=True, is_verified=True)
+        user_a.set_password('Pass123')
+        db.session.add(user_a)
+
+        user_b = User(username='diaryuserb', email='userb@test.com', first_name='Bob', last_name='User', role=Role.STUDENT, is_active=True, is_verified=True)
+        user_b.set_password('Pass123')
+        db.session.add(user_b)
+
+        admin = User(username='diaryadmin', email='diaryadmin@test.com', first_name='Super', last_name='Admin', role=Role.SUPER_ADMIN, is_active=True, is_verified=True)
+        admin.set_password('Pass123')
+        db.session.add(admin)
+        db.session.commit()
+
+        client_a = app_instance.test_client()
+        client_a.post('/auth/login', data={'login_identifier': 'diaryusera', 'password': 'Pass123'}, follow_redirects=True)
+
+        # 1. User A creates a diary entry for 2026-09-11
+        res_save = client_a.post('/diary/api/entry', json={
+            'diary_date': '2026-09-11',
+            'content': 'Alice secret personal diary entry for September 11th.'
+        })
+        assert res_save.status_code == 200
+        json_save = res_save.get_json()
+        assert json_save['success'] is True
+        assert json_save['entry']['content'] == 'Alice secret personal diary entry for September 11th.'
+
+        # 2. Check Database Storage is Encrypted (Encryption At Rest)
+        db.session.expire_all()
+        entry_db = DiaryEntry.query.filter_by(owner_user_id=user_a.id, diary_date=date(2026, 9, 11)).first()
+        assert entry_db is not None
+        assert 'Alice secret' not in entry_db.encrypted_content
+        assert len(entry_db.encrypted_content) > 20
+
+        # 3. User A retrieves entry (READ MODE)
+        res_get_a = client_a.get('/diary/api/entry/2026-09-11')
+        assert res_get_a.status_code == 200
+        json_get_a = res_get_a.get_json()
+        assert json_get_a['has_entry'] is True
+        assert json_get_a['entry']['content'] == 'Alice secret personal diary entry for September 11th.'
+        
+        # User A logs out
+        client_a.get('/auth/logout', follow_redirects=True)
+
+        # 4. User B attempts to access User A's entry (IDOR / PRIVACY ISOLATION TEST)
+        client_b = app_instance.test_client()
+        client_b.post('/auth/login', data={'login_identifier': 'diaryuserb', 'password': 'Pass123'}, follow_redirects=True)
+        res_get_b = client_b.get('/diary/api/entry/2026-09-11')
+        assert res_get_b.status_code == 200
+        json_get_b = res_get_b.get_json()
+        assert json_get_b['has_entry'] is False
+        assert json_get_b['entry'] is None
+        client_b.get('/auth/logout', follow_redirects=True)
+
+        # 5. Admin attempts to access User A's entry via API (ADMIN PRIVACY TEST)
+        client_admin = app_instance.test_client()
+        res_admin_login = client_admin.post('/auth/login', data={'login_type': 'super_admin', 'email': 'diaryadmin@test.com', 'password': 'Pass123'}, follow_redirects=True)
+        assert res_admin_login.status_code == 200
+        res_get_admin = client_admin.get('/diary/api/entry/2026-09-11')
+        assert res_get_admin.status_code == 200
+        json_get_admin = res_get_admin.get_json()
+        assert json_get_admin['has_entry'] is False
+        assert json_get_admin['entry'] is None
+        client_admin.get('/auth/logout', follow_redirects=True)
+
+        # 6. IDOR parameter injection attempt: User B sends payload with owner_user_id = user_a.id
+        client_b = app_instance.test_client()
+        client_b.post('/auth/login', data={'login_identifier': 'diaryuserb', 'password': 'Pass123'}, follow_redirects=True)
+        res_inject = client_b.post('/diary/api/entry', json={
+            'owner_user_id': user_a.id,
+            'diary_date': '2026-09-11',
+            'content': 'Hacked entry by Bob'
+        })
+        assert res_inject.status_code == 200
+        # Check DB that User A's entry was NOT overwritten
+        db.session.expire_all()
+        entry_a_check = DiaryEntry.query.filter_by(owner_user_id=user_a.id, diary_date=date(2026, 9, 11)).first()
+        decrypted_a = decrypt_diary_content(entry_a_check.encrypted_content, user_a.id)
+        assert decrypted_a == 'Alice secret personal diary entry for September 11th.'
+
+        # Verify Bob's entry was created under Bob's ID
+        entry_b_check = DiaryEntry.query.filter_by(owner_user_id=user_b.id, diary_date=date(2026, 9, 11)).first()
+        assert entry_b_check is not None
+        assert entry_b_check.owner_user_id == user_b.id
+        client_b.get('/auth/logout', follow_redirects=True)
+
+        # 7. User A updates existing entry for 2026-09-11 (One entry per user per date constraint)
+        client_a = app_instance.test_client()
+        client_a.post('/auth/login', data={'login_identifier': 'diaryusera', 'password': 'Pass123'}, follow_redirects=True)
+        res_update = client_a.post('/diary/api/entry/2026-09-11', json={
+            'content': 'Alice updated diary entry content.'
+        })
+        assert res_update.status_code == 200
+        assert DiaryEntry.query.filter_by(owner_user_id=user_a.id, diary_date=date(2026, 9, 11)).count() == 1
+
+        # 8. Test Summary API endpoints (Year, Month, Range)
+        res_summary = client_a.get('/diary/api/entries?year=2026&month=9')
+        assert res_summary.status_code == 200
+        json_sum = res_summary.get_json()
+        assert json_sum['count'] >= 1
+        for item in json_sum['entries']:
+            assert 'content' not in item  # Plaintext content NOT in summary
+
+        # 9. Delete entry
+        res_del = client_a.delete('/diary/api/entry/2026-09-11')
+        assert res_del.status_code == 200
+        assert DiaryEntry.query.filter_by(owner_user_id=user_a.id, diary_date=date(2026, 9, 11)).first() is None
+
+        # 10. Access UI page
+        res_ui = client_a.get('/diary/')
+        assert res_ui.status_code == 200
+        assert b'My Personal Diary' in res_ui.data
+
+
+def test_notification_system_comprehensive(app_instance):
+    from app.models import User, Role, Notification
+
+    with app_instance.app_context():
+        user_1 = User(username='notifuser1', email='notif1@test.com', first_name='Notif', last_name='User1', role=Role.STUDENT, is_active=True, is_verified=True)
+        user_1.set_password('Pass123')
+        db.session.add(user_1)
+
+        user_2 = User(username='notifuser2', email='notif2@test.com', first_name='Notif', last_name='User2', role=Role.STUDENT, is_active=True, is_verified=True)
+        user_2.set_password('Pass123')
+        db.session.add(user_2)
+        db.session.commit()
+
+        # Create notifications for User 1
+        n1 = Notification(user_id=user_1.id, title='Notif 1', message='Message 1')
+        n2 = Notification(user_id=user_1.id, title='Notif 2', message='Message 2')
+        n3 = Notification(user_id=user_1.id, title='Notif 3', message='Message 3')
+        # Create notification for User 2
+        n_other = Notification(user_id=user_2.id, title='Other Notif', message='Other Message')
+        db.session.add_all([n1, n2, n3, n_other])
+        db.session.commit()
+
+        client_1 = app_instance.test_client()
+        client_1.post('/auth/login', data={'login_identifier': 'notifuser1', 'password': 'Pass123'}, follow_redirects=True)
+
+        # 1. Fetch notification list -> unread count is 3
+        res_list = client_1.get('/notifications/api/list')
+        assert res_list.status_code == 200
+        json_list = res_list.get_json()
+        assert json_list['unread_count'] == 3
+        assert len(json_list['notifications']) == 3
+
+        # 2. Mark n1 as read
+        res_read = client_1.post(f'/notifications/api/{n1.id}/read')
+        assert res_read.status_code == 200
+        assert res_read.get_json()['unread_count'] == 2
+
+        db.session.expire_all()
+        n1_db = db.session.get(Notification, n1.id)
+        assert n1_db.is_read is True
+        assert n1_db.read_at is not None
+        assert n1_db.is_deleted is False  # Notification remains VISIBLE!
+
+        # 3. Soft-delete n2
+        res_del = client_1.post(f'/notifications/api/{n2.id}/delete')
+        assert res_del.status_code == 200
+        assert res_del.get_json()['unread_count'] == 1
+
+        db.session.expire_all()
+        n2_db = db.session.get(Notification, n2.id)
+        assert n2_db.is_deleted is True
+        assert n2_db.deleted_at is not None
+
+        client_1.get('/auth/logout', follow_redirects=True)
+
+        # 4. User 2 attempts to mark/delete User 1's notification (Authorization Check)
+        client_2 = app_instance.test_client()
+        client_2.post('/auth/login', data={'login_identifier': 'notifuser2', 'password': 'Pass123'}, follow_redirects=True)
+        res_unauth_read = client_2.post(f'/notifications/api/{n3.id}/read')
+        assert res_unauth_read.status_code == 404
+
+        res_unauth_del = client_2.post(f'/notifications/api/{n3.id}/delete')
+        assert res_unauth_del.status_code == 404
+
+        client_2.get('/auth/logout', follow_redirects=True)
+
+        # 5. User 1 marks all as read
+        client_1 = app_instance.test_client()
+        client_1.post('/auth/login', data={'login_identifier': 'notifuser1', 'password': 'Pass123'}, follow_redirects=True)
+        res_all_read = client_1.post('/notifications/api/mark-all-read')
+        assert res_all_read.status_code == 200
+        assert res_all_read.get_json()['unread_count'] == 0
+
+        # 6. User 1 clears all notifications
+        res_clear = client_1.post('/notifications/api/clear-all')
+        assert res_clear.status_code == 200
+
+        # Check list is empty
+        res_empty = client_1.get('/notifications/api/list')
+        assert len(res_empty.get_json()['notifications']) == 0
+
+        # Check User 2's notification remains untouched
+        db.session.expire_all()
+        n_other_db = db.session.get(Notification, n_other.id)
+        assert n_other_db.is_deleted is False
+        assert n_other_db.is_read is False
+
+
+
 
 

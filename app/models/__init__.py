@@ -8,6 +8,7 @@ from app.models.timetable import Timetable, DayOfWeek
 from app.models.exam import Exam, Mark
 from app.models.academic_content import Homework, StudyMaterial
 from app.models.communication import Announcement, Notification
+from app.models.diary import DiaryEntry
 from app.models.enquiry import Enquiry, EnquiryStatus
 from app.models.email_log import EmailLog
 from app.models.email_preference import EmailPreference, EmailCategory
@@ -23,7 +24,9 @@ __all__ = [
     'Exam', 'Mark',
     'Homework', 'StudyMaterial',
     'Announcement', 'Notification',
+    'DiaryEntry',
     'Enquiry', 'EnquiryStatus',
     'EmailLog', 'EmailPreference', 'EmailCategory'
 ]
+
 

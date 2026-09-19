@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications — SkillBasis Academy{% endblock %}
+{% block header_title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width: 900px;">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">
+                <i class="bi bi-bell-fill text-primary me-2"></i>My Notifications
+            </h3>
+            <p class="text-muted small mb-0">View, mark as read, and manage your activity alerts.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 shadow-sm" onclick="markAllNotificationsRead()">
+                <i class="bi bi-check2-all"></i> Mark All as Read
+            </button>
+            <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 shadow-sm" onclick="clearAllNotifications()">
+                <i class="bi bi-trash"></i> Clear All
+            </button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+            <ul class="nav nav-pills card-header-pills small" id="pageNotifFilterTabs">
+                <li class="nav-item">
+                    <a class="nav-link {% if current_filter == 'all' %}active{% endif %} py-1 px-3" href="{{ url_for('notifications.index', filter='all') }}">All</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if current_filter == 'unread' %}active{% endif %} py-1 px-3" href="{{ url_for('notifications.index', filter='unread') }}">
+                        Unread {% if unread_count > 0 %}<span class="badge bg-danger ms-1">{{ unread_count }}</span>{% endif %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if current_filter == 'read' %}active{% endif %} py-1 px-3" href="{{ url_for('notifications.index', filter='read') }}">Read</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-0">
+            {% if not notifications %}
+            <div class="text-center p-5 text-muted">
+                <i class="bi bi-bell-slash fs-1 text-secondary opacity-50 d-block mb-3"></i>
+                <h5 class="fw-semibold text-dark mb-1">No Notifications Found</h5>
+                <p class="small text-muted mb-0">You're all caught up! New notifications will appear here.</p>
+            </div>
+            {% else %}
+            <div class="list-group list-group-flush" id="pageNotifList">
+                {% for n in notifications %}
+                <div class="list-group-item p-3 border-bottom {% if not n.is_read %}bg-primary-subtle bg-opacity-10{% endif %} transition-all" id="page-notif-item-{{ n.id }}">
+                    <div class="d-flex align-items-start justify-content-between gap-3">
+                        <div class="d-flex gap-3">
+                            <div class="mt-1">
+                                {% if not n.is_read %}
+                                <span class="badge rounded-circle bg-primary p-1 d-inline-block" style="width: 10px; height: 10px;" title="Unread"></span>
+                                {% else %}
+                                <span class="badge rounded-circle bg-secondary bg-opacity-25 p-1 d-inline-block" style="width: 10px; height: 10px;" title="Read"></span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 {% if n.is_read %}text-secondary{% else %}text-dark{% endif %}">
+                                    {{ n.title }}
+                                </h6>
+                                <p class="mb-1 text-muted small" style="line-height: 1.4;">{{ n.message }}</p>
+                                <div class="d-flex align-items-center gap-3 mt-2">
+                                    <span class="text-muted small" style="font-size: 0.75rem;">
+                                        <i class="bi bi-clock me-1"></i>{{ n.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                                    </span>
+                                    {% if n.link %}
+                                    <a href="{{ n.link }}" class="small text-primary fw-semibold text-decoration-none" style="font-size: 0.75rem;">
+                                        Open Link <i class="bi bi-arrow-up-right ms-1"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if not n.is_read %}
+                            <button class="btn btn-sm btn-outline-primary py-1 px-2 small" onclick="markPageNotifRead(event, {{ n.id }})" style="font-size: 0.75rem;">
+                                <i class="bi bi-check2 me-1"></i> Mark as Read
+                            </button>
+                            {% endif %}
+                            <button class="btn btn-sm btn-outline-danger py-1 px-2 border-0 text-secondary hover-danger" onclick="deletePageNotif(event, {{ n.id }})" title="Delete Notification">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function markPageNotifRead(e, id) {
+    if(e) e.stopPropagation();
+    fetch(`/notifications/api/${id}/read`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCsrfToken()}
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        }
+    });
+}
+
+function deletePageNotif(e, id) {
+    if(e) e.stopPropagation();
+    fetch(`/notifications/api/${id}/delete`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCsrfToken()}
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const item = document.getElementById(`page-notif-item-${id}`);
+            if (item) item.remove();
+            if (typeof updateNotifBadge === 'function') updateNotifBadge(data.unread_count);
+        }
+    });
+}
+</script>
+{% endblock %}

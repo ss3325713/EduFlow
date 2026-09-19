@@ -1,0 +1,663 @@
+{% extends "base.html" %}
+
+{% block title %}My Diary — SkillBasis Academy{% endblock %}
+{% block header_title %}My Personal Diary{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width: 1100px;">
+    <!-- Diary Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-journal-bookmark-fill text-primary"></i> My Personal Diary
+            </h3>
+            <p class="text-muted small mb-0">Your private, encrypted digital notebook inside SkillBasis.</p>
+        </div>
+
+        <!-- 4 Independent View Modes Switcher -->
+        <div class="btn-group shadow-sm p-1 bg-white rounded-3 border" role="group" aria-label="Diary View Switcher">
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-2 px-3 fw-semibold diary-view-btn" id="btnViewDay" onclick="switchDiaryView('day')">
+                <i class="bi bi-calendar-day me-1"></i> Day
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-2 px-3 fw-semibold diary-view-btn" id="btnViewWeek" onclick="switchDiaryView('week')">
+                <i class="bi bi-calendar-week me-1"></i> Week
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-2 px-3 fw-semibold diary-view-btn" id="btnViewMonth" onclick="switchDiaryView('month')">
+                <i class="bi bi-calendar-month me-1"></i> Month
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-2 px-3 fw-semibold diary-view-btn" id="btnViewYear" onclick="switchDiaryView('year')">
+                <i class="bi bi-calendar3 me-1"></i> Year
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert Banner -->
+    <div id="diaryAlert" class="alert alert-dismissible fade show d-none border-0 shadow-sm mb-4" role="alert">
+        <span id="diaryAlertMsg"></span>
+        <button type="button" class="btn-close" onclick="hideDiaryAlert()"></button>
+    </div>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <!-- 1. DAY VIEW -->
+        <div id="viewContainerDay" class="diary-view-panel p-4">
+            <!-- Day Navigation Header -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navDay(-1)" title="Previous Day">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm px-3 fw-semibold" onclick="navToday()">
+                        Today
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navDay(1)" title="Next Day">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="text-center">
+                    <h4 class="fw-bold text-dark mb-0" id="dayDisplayTitle">Loading...</h4>
+                    <span id="dayDisplaySub" class="text-muted small"></span>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <input type="date" id="dayDatePicker" class="form-control form-control-sm border-secondary-subtle" style="width: 140px;" onchange="onDatePickerChange(this.value)">
+                </div>
+            </div>
+
+            <!-- READ MODE -->
+            <div id="dayReadMode" class="diary-mode-panel">
+                <div id="readContentBox" class="p-4 rounded-3 border bg-light mb-4" style="min-height: 250px; white-space: pre-wrap; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 1.05rem; line-height: 1.6; color: #2c3e50;">
+                    <div class="text-center p-5 text-muted">
+                        <div class="spinner-border text-primary spinner-border-sm mb-2"></div>
+                        <div>Loading entry...</div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between pt-2">
+                    <span id="readLastUpdated" class="text-muted small"></span>
+                    <div>
+                        <button id="btnStartEdit" class="btn btn-primary px-4 fw-semibold shadow-sm" onclick="enterEditMode()">
+                            <i class="bi bi-pencil-square me-1"></i> Edit Entry
+                        </button>
+                        <button id="btnStartWrite" class="btn btn-success px-4 fw-semibold shadow-sm d-none" onclick="enterEditMode()">
+                            <i class="bi bi-journal-plus me-1"></i> Write Entry
+                        </button>
+                        <button id="btnDeleteEntry" class="btn btn-outline-danger btn-sm px-3 ms-2 d-none" onclick="deleteCurrentEntry()">
+                            <i class="bi bi-trash me-1"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EDIT MODE -->
+            <div id="dayEditMode" class="diary-mode-panel d-none">
+                <form id="diaryForm" onsubmit="handleDiarySave(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary small">Diary Entry Content (Encrypted at rest)</label>
+                        <textarea id="diaryEditor" class="form-control rounded-3 p-3 shadow-none" rows="10" placeholder="Dear Diary, today..." style="font-size: 1.05rem; line-height: 1.6; border-color: #cbd5e1;"></textarea>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                        <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" onclick="cancelEditMode()">
+                            Cancel
+                        </button>
+                        <button type="submit" id="btnSaveDiary" class="btn btn-primary px-5 fw-semibold shadow-sm">
+                            <span id="btnSaveSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
+                            <span id="btnSaveText"><i class="bi bi-check-circle me-1"></i> Save Changes</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 2. WEEK VIEW -->
+        <div id="viewContainerWeek" class="diary-view-panel p-4 d-none">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navWeek(-1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm px-3 fw-semibold" onclick="navThisWeek()">
+                        This Week
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navWeek(1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                <h4 class="fw-bold text-dark mb-0" id="weekDisplayTitle">Loading Week...</h4>
+                <div></div>
+            </div>
+
+            <div class="row g-3" id="weekGridContainer">
+                <!-- 7 Day Cards inserted via JS -->
+            </div>
+        </div>
+
+        <!-- 3. MONTH VIEW -->
+        <div id="viewContainerMonth" class="diary-view-panel p-4 d-none">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navMonth(-1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm px-3 fw-semibold" onclick="navThisMonth()">
+                        Current Month
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navMonth(1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                <h4 class="fw-bold text-dark mb-0" id="monthDisplayTitle">Loading Month...</h4>
+                <div></div>
+            </div>
+
+            <!-- Calendar Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle text-center mb-0" style="table-layout: fixed;">
+                    <thead class="table-light text-muted small fw-bold">
+                        <tr>
+                            <th class="py-2">Mon</th>
+                            <th class="py-2">Tue</th>
+                            <th class="py-2">Wed</th>
+                            <th class="py-2">Thu</th>
+                            <th class="py-2">Fri</th>
+                            <th class="py-2">Sat</th>
+                            <th class="py-2">Sun</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthCalendarBody">
+                        <!-- Calendar rows inserted via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. YEAR VIEW -->
+        <div id="viewContainerYear" class="diary-view-panel p-4 d-none">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navYear(-1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm px-3 fw-semibold" onclick="navThisYear()">
+                        Current Year
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navYear(1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                <h4 class="fw-bold text-dark mb-0" id="yearDisplayTitle">2026</h4>
+                <div></div>
+            </div>
+
+            <div class="row g-4" id="yearGridContainer">
+                <!-- 12 Month Cards inserted via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// State Management
+let currentView = '{{ initial_view }}' || 'day';
+let currentDate = new Date('{{ initial_date }}' || '{{ today_date }}');
+let todayDateStr = '{{ today_date }}';
+let currentEntryData = None = null;
+let isEditDirty = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial setup
+    const editor = document.getElementById('diaryEditor');
+    if (editor) {
+        editor.addEventListener('input', function() {
+            isEditDirty = true;
+        });
+    }
+
+    switchDiaryView(currentView, false);
+});
+
+function getCsrfHeader() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '{{ csrf_token() if csrf_token else "" }}';
+}
+
+function formatDateISO(d) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function checkUnsavedChanges() {
+    if (isEditDirty) {
+        return confirm("You have unsaved diary changes. Leave without saving?");
+    }
+    return true;
+}
+
+function showDiaryAlert(msg, type = 'success') {
+    const box = document.getElementById('diaryAlert');
+    const txt = document.getElementById('diaryAlertMsg');
+    if (box && txt) {
+        box.className = `alert alert-${type} alert-dismissible fade show border-0 shadow-sm mb-4`;
+        txt.textContent = msg;
+        box.classList.remove('d-none');
+        setTimeout(() => box.classList.add('d-none'), 5000);
+    }
+}
+
+function hideDiaryAlert() {
+    const box = document.getElementById('diaryAlert');
+    if (box) box.classList.add('d-none');
+}
+
+// ----------------------------------------------------
+// VIEW SWITCHER CONTROLLER
+// ----------------------------------------------------
+function switchDiaryView(viewMode, confirmCheck = true) {
+    if (confirmCheck && isEditDirty) {
+        if (!checkUnsavedChanges()) return;
+    }
+
+    currentView = viewMode;
+    isEditDirty = false;
+
+    // Highlight Buttons
+    document.querySelectorAll('.diary-view-btn').forEach(btn => btn.classList.remove('active', 'btn-primary'));
+    document.querySelectorAll('.diary-view-btn').forEach(btn => btn.classList.add('btn-outline-primary'));
+
+    const activeBtn = document.getElementById(`btnView${viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}`);
+    if (activeBtn) {
+        activeBtn.classList.add('active', 'btn-primary');
+        activeBtn.classList.remove('btn-outline-primary');
+    }
+
+    // Hide Panels
+    document.querySelectorAll('.diary-view-panel').forEach(panel => panel.classList.add('d-none'));
+
+    // Show Selected Panel
+    if (viewMode === 'day') {
+        document.getElementById('viewContainerDay').classList.remove('d-none');
+        loadDayView();
+    } else if (viewMode === 'week') {
+        document.getElementById('viewContainerWeek').classList.remove('d-none');
+        loadWeekView();
+    } else if (viewMode === 'month') {
+        document.getElementById('viewContainerMonth').classList.remove('d-none');
+        loadMonthView();
+    } else if (viewMode === 'year') {
+        document.getElementById('viewContainerYear').classList.remove('d-none');
+        loadYearView();
+    }
+}
+
+// ----------------------------------------------------
+// 1. DAY VIEW & EDIT WORKFLOW
+// ----------------------------------------------------
+function loadDayView() {
+    const dateStr = formatDateISO(currentDate);
+    document.getElementById('dayDatePicker').value = dateStr;
+    
+    // Format Title
+    const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+    document.getElementById('dayDisplayTitle').textContent = currentDate.toLocaleDateString('en-US', options);
+    document.getElementById('dayDisplaySub').textContent = (dateStr === todayDateStr) ? "Today's Journal" : `Date: ${dateStr}`;
+
+    // Reset to Read Mode
+    document.getElementById('dayReadMode').classList.remove('d-none');
+    document.getElementById('dayEditMode').classList.add('d-none');
+    isEditDirty = false;
+
+    const contentBox = document.getElementById('readContentBox');
+    contentBox.innerHTML = `
+        <div class="text-center p-5 text-muted">
+            <div class="spinner-border text-primary spinner-border-sm mb-2"></div>
+            <div>Retrieving encrypted diary entry...</div>
+        </div>`;
+
+    fetch(`/diary/api/entry/${dateStr}`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                showDiaryAlert(data.error || 'Failed to load entry.', 'danger');
+                return;
+            }
+
+            if (data.has_entry && data.entry) {
+                currentEntryData = data.entry;
+                contentBox.textContent = data.entry.content;
+                document.getElementById('readLastUpdated').textContent = `Last saved: ${new Date(data.entry.updated_at).toLocaleString()}`;
+                document.getElementById('btnStartEdit').classList.remove('d-none');
+                document.getElementById('btnStartWrite').classList.add('d-none');
+                document.getElementById('btnDeleteEntry').classList.remove('d-none');
+            } else {
+                currentEntryData = null;
+                contentBox.innerHTML = `
+                    <div class="text-center p-5 text-muted">
+                        <i class="bi bi-journal-x fs-1 text-secondary opacity-50 d-block mb-3"></i>
+                        <h5 class="fw-semibold text-dark mb-1">No diary entry for this day</h5>
+                        <p class="small text-muted mb-3">Write down your memories, goals, or notes for ${dateStr}.</p>
+                        <button class="btn btn-sm btn-primary px-4 fw-semibold shadow-sm" onclick="enterEditMode()">
+                            <i class="bi bi-plus-circle me-1"></i> Write Entry
+                        </button>
+                    </div>`;
+                document.getElementById('readLastUpdated').textContent = '';
+                document.getElementById('btnStartEdit').classList.add('d-none');
+                document.getElementById('btnStartWrite').classList.remove('d-none');
+                document.getElementById('btnDeleteEntry').classList.add('d-none');
+            }
+        })
+        .catch(err => {
+            console.error("Error loading day entry:", err);
+            contentBox.innerHTML = `<div class="text-danger p-4 text-center">Failed to load diary entry. Check connection.</div>`;
+        });
+}
+
+function navDay(offset) {
+    if (isEditDirty && !checkUnsavedChanges()) return;
+    currentDate.setDate(currentDate.getDate() + offset);
+    loadDayView();
+}
+
+function navToday() {
+    if (isEditDirty && !checkUnsavedChanges()) return;
+    currentDate = new Date();
+    loadDayView();
+}
+
+function onDatePickerChange(val) {
+    if (!val) return;
+    if (isEditDirty && !checkUnsavedChanges()) return;
+    currentDate = new Date(val);
+    loadDayView();
+}
+
+function enterEditMode() {
+    document.getElementById('dayReadMode').classList.add('d-none');
+    document.getElementById('dayEditMode').classList.remove('d-none');
+
+    const editor = document.getElementById('diaryEditor');
+    editor.value = currentEntryData ? currentEntryData.content : '';
+    editor.focus();
+    isEditDirty = false;
+}
+
+function cancelEditMode() {
+    if (isEditDirty && !checkUnsavedChanges()) return;
+    isEditDirty = false;
+    document.getElementById('dayEditMode').classList.add('d-none');
+    document.getElementById('dayReadMode').classList.remove('d-none');
+}
+
+function handleDiarySave(e) {
+    e.preventDefault();
+    const content = document.getElementById('diaryEditor').value.trim();
+    const dateStr = formatDateISO(currentDate);
+
+    if (!content) {
+        showDiaryAlert("Diary entry content cannot be empty.", "warning");
+        return;
+    }
+
+    // Disable Save Button & Prevent Duplicate Requests
+    const saveBtn = document.getElementById('btnSaveDiary');
+    const saveSpinner = document.getElementById('btnSaveSpinner');
+    const saveText = document.getElementById('btnSaveText');
+
+    saveBtn.disabled = true;
+    saveSpinner.classList.remove('d-none');
+    saveText.textContent = ' Saving...';
+
+    fetch('/diary/api/entry', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfHeader()
+        },
+        body: JSON.stringify({
+            diary_date: dateStr,
+            content: content
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        saveBtn.disabled = false;
+        saveSpinner.classList.add('d-none');
+        saveText.innerHTML = '<i class="bi bi-check-circle me-1"></i> Save Changes';
+
+        if (data.success) {
+            isEditDirty = false;
+            showDiaryAlert(data.message || "Entry saved successfully!", "success");
+            loadDayView();
+        } else {
+            showDiaryAlert(data.error || "Error saving entry.", "danger");
+        }
+    })
+    .catch(err => {
+        console.error("Save error:", err);
+        saveBtn.disabled = false;
+        saveSpinner.classList.add('d-none');
+        saveText.innerHTML = '<i class="bi bi-check-circle me-1"></i> Save Changes';
+        showDiaryAlert("Server error while saving diary entry. Please try again.", "danger");
+    });
+}
+
+function deleteCurrentEntry() {
+    const dateStr = formatDateISO(currentDate);
+    if (!confirm(`Are you sure you want to delete your diary entry for ${dateStr}? This action cannot be undone.`)) return;
+
+    fetch(`/diary/api/entry/${dateStr}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCsrfHeader()
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showDiaryAlert(data.message || "Entry deleted.", "info");
+            loadDayView();
+        } else {
+            showDiaryAlert(data.error || "Failed to delete entry.", "danger");
+        }
+    });
+}
+
+// ----------------------------------------------------
+// 2. WEEK VIEW
+// ----------------------------------------------------
+function loadWeekView() {
+    // Determine Start of Week (Monday)
+    const d = new Date(currentDate);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+    const startOfWeek = new Date(d.setDate(diff));
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+    const startStr = formatDateISO(startOfWeek);
+    const endStr = formatDateISO(endOfWeek);
+
+    document.getElementById('weekDisplayTitle').textContent = `Week of ${startOfWeek.toLocaleDateString('en-US', {month:'short', day:'numeric'})} – ${endOfWeek.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}`;
+
+    fetch(`/diary/api/entries?start_date=${startStr}&end_date=${endStr}`)
+        .then(res => res.json())
+        .then(data => {
+            const entryDates = new Set((data.entries || []).map(e => e.date));
+            const grid = document.getElementById('weekGridContainer');
+            let html = '';
+
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(startOfWeek);
+                dayDate.setDate(dayDate.getDate() + i);
+                const iso = formatDateISO(dayDate);
+                const hasEntry = entryDates.has(iso);
+                const isToday = (iso === todayDateStr);
+                const dayName = dayDate.toLocaleDateString('en-US', { weekday: 'short' });
+                const dateDisplay = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                html += `
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="card h-100 border ${isToday ? 'border-primary border-2 shadow-sm' : 'border-secondary-subtle'} rounded-3 p-3 text-center cursor-pointer hover-shadow" onclick="jumpToDate('${iso}')">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="fw-bold text-dark fs-5">${dayName}</span>
+                                <span class="badge ${isToday ? 'bg-primary' : 'bg-light text-muted border'}">${dateDisplay}</span>
+                            </div>
+                            <div class="py-3">
+                                ${hasEntry ? 
+                                    `<span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Entry Saved</span>` : 
+                                    `<span class="text-muted small">No entry</span>`}
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary w-100 mt-2">Open Day</button>
+                        </div>
+                    </div>`;
+            }
+            grid.innerHTML = html;
+        });
+}
+
+function navWeek(offset) {
+    currentDate.setDate(currentDate.getDate() + (offset * 7));
+    loadWeekView();
+}
+
+function navThisWeek() {
+    currentDate = new Date();
+    loadWeekView();
+}
+
+// ----------------------------------------------------
+// 3. MONTH VIEW
+// ----------------------------------------------------
+function loadMonthView() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+
+    document.getElementById('monthDisplayTitle').textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    fetch(`/diary/api/entries?year=${year}&month=${month}`)
+        .then(res => res.json())
+        .then(data => {
+            const entryDates = new Set((data.entries || []).map(e => e.date));
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            
+            let startDayIndex = firstDay.getDay() - 1; // Mon = 0
+            if (startDayIndex === -1) startDayIndex = 6; // Sun
+
+            const tbody = document.getElementById('monthCalendarBody');
+            let html = '';
+            let dateCounter = 1;
+            const totalDays = lastDay.getDate();
+
+            for (let r = 0; r < 6; r++) {
+                if (dateCounter > totalDays) break;
+                html += '<tr>';
+                for (let c = 0; c < 7; c++) {
+                    if ((r === 0 && c < startDayIndex) || dateCounter > totalDays) {
+                        html += '<td class="bg-light opacity-50 py-3"></td>';
+                    } else {
+                        const cellDate = new Date(year, month - 1, dateCounter);
+                        const iso = formatDateISO(cellDate);
+                        const hasEntry = entryDates.has(iso);
+                        const isToday = (iso === todayDateStr);
+
+                        html += `
+                            <td class="py-3 position-relative cursor-pointer ${isToday ? 'bg-primary-subtle fw-bold' : ''}" onclick="jumpToDate('${iso}')" style="height: 75px;">
+                                <div class="d-flex flex-column align-items-center justify-content-between h-100">
+                                    <span class="small ${isToday ? 'badge bg-primary rounded-circle' : 'text-dark'}">${dateCounter}</span>
+                                    ${hasEntry ? '<span class="badge rounded-circle bg-success p-1" title="Entry Exists">●</span>' : '<span style="height:10px;"></span>'}
+                                </div>
+                            </td>`;
+                        dateCounter++;
+                    }
+                }
+                html += '</tr>';
+            }
+            tbody.innerHTML = html;
+        });
+}
+
+function navMonth(offset) {
+    currentDate.setMonth(currentDate.getMonth() + offset);
+    loadMonthView();
+}
+
+function navThisMonth() {
+    currentDate = new Date();
+    loadMonthView();
+}
+
+// ----------------------------------------------------
+// 4. YEAR VIEW
+// ----------------------------------------------------
+function loadYearView() {
+    const year = currentDate.getFullYear();
+    document.getElementById('yearDisplayTitle').textContent = `Year ${year}`;
+
+    fetch(`/diary/api/entries?year=${year}`)
+        .then(res => res.json())
+        .then(data => {
+            const countsByMonth = {};
+            (data.entries || []).forEach(e => {
+                const m = parseInt(e.date.split('-')[1], 10);
+                countsByMonth[m] = (countsByMonth[m] || 0) + 1;
+            });
+
+            const grid = document.getElementById('yearGridContainer');
+            let html = '';
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            monthNames.forEach((mName, idx) => {
+                const mNum = idx + 1;
+                const cnt = countsByMonth[mNum] || 0;
+
+                html += `
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                        <div class="card h-100 border border-secondary-subtle rounded-3 p-3 text-center cursor-pointer hover-shadow" onclick="jumpToMonth(${year}, ${mNum})">
+                            <h5 class="fw-bold text-dark mb-2">${mName}</h5>
+                            <div class="py-2">
+                                <span class="badge ${cnt > 0 ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-light text-muted border'} px-3 py-2 rounded-pill small">
+                                    ${cnt} ${cnt === 1 ? 'entry' : 'entries'}
+                                </span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary w-100 mt-2">View Month</button>
+                        </div>
+                    </div>`;
+            });
+            grid.innerHTML = html;
+        });
+}
+
+function navYear(offset) {
+    currentDate.setFullYear(currentDate.getFullYear() + offset);
+    loadYearView();
+}
+
+function navThisYear() {
+    currentDate = new Date();
+    loadYearView();
+}
+
+// ----------------------------------------------------
+// NAVIGATION HELPERS
+// ----------------------------------------------------
+function jumpToDate(isoDateStr) {
+    currentDate = new Date(isoDateStr);
+    switchDiaryView('day');
+}
+
+function jumpToMonth(year, month) {
+    currentDate = new Date(year, month - 1, 1);
+    switchDiaryView('month');
+}
+</script>
+
+<style>
+.cursor-pointer { cursor: pointer; }
+.hover-shadow:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important; transition: all .2s ease; }
+.transition-all { transition: all .2s ease; }
+</style>
+{% endblock %}

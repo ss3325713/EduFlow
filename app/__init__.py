@@ -30,7 +30,8 @@ def create_app(config_name='development'):
             db.create_all()
             with db.engine.connect() as conn:
                 inspector = db.inspect(db.engine)
-                if 'users' in inspector.get_table_names():
+                tables = inspector.get_table_names()
+                if 'users' in tables:
                     existing_cols = [c['name'] for c in inspector.get_columns('users')]
                     if 'is_verified' not in existing_cols:
                         conn.execute(db.text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1"))
@@ -42,7 +43,15 @@ def create_app(config_name='development'):
                         conn.execute(db.text("ALTER TABLE users ADD COLUMN password_reset_token_hash VARCHAR(128)"))
                     if 'password_reset_expires_at' not in existing_cols:
                         conn.execute(db.text("ALTER TABLE users ADD COLUMN password_reset_expires_at DATETIME"))
-                    conn.commit()
+                if 'notifications' in tables:
+                    notif_cols = [c['name'] for c in inspector.get_columns('notifications')]
+                    if 'read_at' not in notif_cols:
+                        conn.execute(db.text("ALTER TABLE notifications ADD COLUMN read_at DATETIME"))
+                    if 'is_deleted' not in notif_cols:
+                        conn.execute(db.text("ALTER TABLE notifications ADD COLUMN is_deleted BOOLEAN DEFAULT 0"))
+                    if 'deleted_at' not in notif_cols:
+                        conn.execute(db.text("ALTER TABLE notifications ADD COLUMN deleted_at DATETIME"))
+                conn.commit()
         except Exception as err:
             app.logger.warning(f"Auto database schema migration notice: {err}")
 
@@ -58,9 +67,23 @@ def create_app(config_name='development'):
             settings = InstituteSettings.get_settings()
         except Exception:
             settings = None
+
+        unread_notifications_count = 0
+        if current_user and current_user.is_authenticated:
+            try:
+                from app.models.communication import Notification
+                unread_notifications_count = Notification.query.filter_by(
+                    user_id=current_user.id,
+                    is_read=False,
+                    is_deleted=False
+                ).count()
+            except Exception:
+                unread_notifications_count = 0
+
         return {
             'institute_settings': settings,
-            'Role': Role
+            'Role': Role,
+            'unread_notifications_count': unread_notifications_count
         }
 
     # Template filter for localized currency formatting
@@ -114,6 +137,8 @@ def create_app(config_name='development'):
     from app.reports import reports_bp
     from app.settings import settings_bp
     from app.audit import audit_bp
+    from app.diary import diary_bp
+    from app.notifications import notifications_bp
     from app.api.v1 import api_v1_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -135,6 +160,8 @@ def create_app(config_name='development'):
     app.register_blueprint(reports_bp, url_prefix='/reports')
     app.register_blueprint(settings_bp, url_prefix='/settings')
     app.register_blueprint(audit_bp, url_prefix='/audit')
+    app.register_blueprint(diary_bp, url_prefix='/diary')
+    app.register_blueprint(notifications_bp, url_prefix='/notifications')
     
     # Exclude CSRF for REST API blueprint
     csrf.exempt(api_v1_bp)
