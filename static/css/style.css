@@ -1,4 +1,4 @@
-/* EduFlow Academy - Modern SaaS Custom Design System */
+/* EduFlow / SkillBasis Academy - Responsive SaaS Design System */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
@@ -32,21 +32,35 @@
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-color: var(--bg-main);
     color: var(--text-primary);
     min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* App Wrapper Layout */
 .app-wrapper {
     display: flex;
     min-height: 100vh;
+    width: 100%;
     overflow-x: hidden;
 }
 
-/* Sidebar Styling */
+/* Sidebar Navigation */
 .app-sidebar {
     width: 260px;
     background-color: var(--sidebar-bg);
@@ -54,12 +68,12 @@ body {
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    transition: all 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1000;
 }
 
 .sidebar-header {
-    padding: 1.25rem 1.5rem;
+    padding: 1.25rem 1.25rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -78,20 +92,26 @@ body {
     font-weight: 700;
     font-size: 1.2rem;
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    flex-shrink: 0;
 }
 
 .brand-name {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: #ffffff;
     letter-spacing: -0.3px;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
 }
 
 .sidebar-menu {
     padding: 1rem 0.75rem;
     flex-grow: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .menu-category {
@@ -132,6 +152,28 @@ body {
     font-size: 1.1rem;
     width: 20px;
     text-align: center;
+    flex-shrink: 0;
+}
+
+/* Sidebar Drawer Overlay for Mobile */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-overlay.show {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Main Content Area */
@@ -140,6 +182,7 @@ body {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    width: 100%;
 }
 
 .app-header {
@@ -153,10 +196,12 @@ body {
     position: sticky;
     top: 0;
     z-index: 900;
+    width: 100%;
 }
 
 .header-search {
     width: 320px;
+    max-width: 100%;
 }
 
 .header-user-profile {
@@ -176,11 +221,14 @@ body {
     justify-content: center;
     font-weight: 600;
     font-size: 0.9rem;
+    flex-shrink: 0;
 }
 
 .main-body {
     padding: 1.5rem 2rem;
     flex-grow: 1;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* Cards & Widgets */
@@ -191,6 +239,7 @@ body {
     padding: 1.25rem 1.5rem;
     box-shadow: var(--shadow-sm);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
 }
 
 .stat-card:hover {
@@ -206,6 +255,7 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 1.4rem;
+    flex-shrink: 0;
 }
 
 .stat-icon.primary { background-color: #EEF2FF; color: #4F46E5; }
@@ -219,6 +269,7 @@ body {
     color: var(--text-primary);
     line-height: 1.2;
     margin-top: 0.25rem;
+    word-break: break-word;
 }
 
 .stat-label {
@@ -227,17 +278,27 @@ body {
     font-weight: 500;
 }
 
-/* Table Styling */
+/* Table Card & Responsive Table System */
 .table-card {
     background: #ffffff;
     border: 1px solid var(--card-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+}
+
+.table-responsive {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .table-custom {
     margin-bottom: 0;
+    width: 100%;
 }
 
 .table-custom th {
@@ -249,6 +310,7 @@ body {
     font-weight: 600;
     padding: 0.9rem 1.25rem;
     border-bottom: 1px solid var(--card-border);
+    white-space: nowrap;
 }
 
 .table-custom td {
@@ -265,6 +327,8 @@ body {
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 600;
+    display: inline-block;
+    white-space: nowrap;
 }
 
 .badge-super_admin { background-color: #FEE2E2; color: #991B1B; }
@@ -282,6 +346,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    white-space: nowrap;
 }
 
 .badge-status.active, .badge-status.paid, .badge-status.present, .badge-status.valid, .badge-status.converted {
@@ -299,9 +364,160 @@ body {
     color: #991B1B;
 }
 
+/* Modals System */
+.modal-dialog {
+    max-width: 600px;
+    margin: 1.75rem auto;
+}
+
+/* --------------------------------------------------
+   RESPONSIVE MEDIA QUERIES (Mobile, Tablet, Laptop)
+   -------------------------------------------------- */
+
+/* Desktop Sticky Sidebar (>= 768px) */
+@media (min-width: 768px) {
+    .app-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        transform: none !important;
+    }
+
+    .sidebar-overlay {
+        display: none !important;
+    }
+}
+
+/* Tablet & Mobile Layout (< 768px) */
+@media (max-width: 767.98px) {
+    .app-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 270px;
+        max-width: 85vw;
+        transform: translateX(-100%);
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+        z-index: 1050;
+    }
+
+    .app-sidebar.show {
+        transform: translateX(0);
+    }
+
+    .app-header {
+        padding: 0 0.85rem;
+        height: 60px;
+    }
+
+    .main-body {
+        padding: 1rem 0.75rem;
+    }
+
+    .stat-card {
+        padding: 1rem 0.85rem;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .stat-value {
+        font-size: 1.35rem;
+    }
+
+    .stat-label {
+        font-size: 0.78rem;
+    }
+
+    /* Form Controls & Action Headers */
+    .d-flex.gap-2, .d-flex.gap-3 {
+        flex-wrap: wrap;
+    }
+
+    /* Modal Responsive Dialog */
+    .modal-dialog {
+        max-width: 95vw!important;
+        margin: 0.5rem auto!important;
+    }
+
+    .modal-body {
+        max-height: 75vh;
+        overflow-y: auto;
+    }
+
+    /* Notification Dropdown bounds on small screens */
+    .dropdown-menu-end {
+        right: 0!important;
+        left: auto!important;
+        max-width: 92vw!important;
+    }
+
+    /* Attendance Radio Buttons */
+    .btn-group.btn-group-sm {
+        flex-wrap: wrap;
+        gap: 2px;
+    }
+    .btn-group.btn-group-sm .btn {
+        border-radius: 4px!important;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    /* Request Center & Nav Tabs Scroll */
+    .nav-pills.custom-pills, .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+    }
+    .nav-pills.custom-pills .nav-item, .nav-tabs .nav-item {
+        flex-shrink: 0;
+    }
+}
+
+/* Extra Small Phones (< 480px) */
+@media (max-width: 479.98px) {
+    .main-body {
+        padding: 0.85rem 0.5rem;
+    }
+
+    .card-body {
+        padding: 0.85rem!important;
+    }
+
+    .table-custom th, .table-custom td {
+        padding: 0.75rem 0.65rem;
+        font-size: 0.825rem;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.78rem;
+    }
+
+    .stat-card {
+        padding: 0.85rem 0.65rem;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+    }
+}
+
+/* Large Screens (>= 1200px) */
+@media (min-width: 1200px) {
+    .main-body {
+        padding: 1.75rem 2.5rem;
+    }
+}
+
 /* Receipt Print View */
 @media print {
-    .app-sidebar, .app-header, .btn-no-print {
+    .app-sidebar, .app-header, .btn-no-print, .sidebar-overlay {
         display: none !important;
     }
     .app-content {

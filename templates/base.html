@@ -25,6 +25,7 @@
                     <h1 class="brand-name">{{ institute_settings.name if institute_settings else 'EduFlow Academy' }}</h1>
                     <span class="badge bg-primary-subtle text-primary border" style="font-size: 0.65rem;">{{ institute_settings.academic_session if institute_settings else '2026-2027' }}</span>
                 </div>
+                <button type="button" class="btn-close btn-close-white ms-auto d-md-none" id="sidebarCloseBtn" aria-label="Close"></button>
             </div>
 
             <div class="sidebar-menu">
@@ -142,6 +143,7 @@
                 {% endif %}
             </div>
         </aside>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <!-- Main Content Area -->
         <main class="app-content">

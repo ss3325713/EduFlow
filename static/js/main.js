@@ -1,14 +1,65 @@
-// EduFlow Academy - Client Interactive Script
+// EduFlow Academy - Client Interactive Script & Mobile Drawer Handler
 document.addEventListener('DOMContentLoaded', function () {
     // Sidebar toggle for mobile view
     const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
     const sidebar = document.querySelector('.app-sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-    if (sidebarToggle && sidebar) {
-        sidebarToggle.addEventListener('click', function () {
-            sidebar.classList.toggle('show');
+    function openSidebar() {
+        if (sidebar) sidebar.classList.add('show');
+        if (sidebarOverlay) sidebarOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+        if (sidebar) sidebar.classList.remove('show');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (sidebar && sidebar.classList.contains('show')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
         });
     }
+
+    if (sidebarCloseBtn) {
+        sidebarCloseBtn.addEventListener('click', closeSidebar);
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+
+    // Auto-close sidebar when clicking any navigation link on mobile
+    const sidebarNavLinks = document.querySelectorAll('.app-sidebar .nav-link-item');
+    sidebarNavLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            if (window.innerWidth < 768) {
+                closeSidebar();
+            }
+        });
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar && sidebar.classList.contains('show')) {
+            closeSidebar();
+        }
+    });
+
+    // Reset overflow if window is resized above mobile breakpoint
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768) {
+            closeSidebar();
+        }
+    });
 
     // Auto dismiss alerts after 5 seconds
     const alerts = document.querySelectorAll('.alert-dismissible');
