@@ -35,6 +35,12 @@
                     <span>Dashboard</span>
                 </a>
 
+                <div class="menu-category">Personal Space</div>
+                <a href="{{ url_for('diary.index') }}" class="nav-link-item {% if request.endpoint and 'diary' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-journal-richtext text-warning"></i>
+                    <span>My Personal Diary</span>
+                </a>
+
                 {% if current_user.is_admin() or current_user.is_teacher() %}
                 <div class="menu-category">Academic Management</div>
                 <a href="{{ url_for('students.index') }}" class="nav-link-item {% if request.endpoint and 'students' in request.endpoint %}active{% endif %}">
@@ -87,12 +93,6 @@
                     <span>Fees & Receipts</span>
                 </a>
                 {% endif %}
-
-                <div class="menu-category">Personal Space</div>
-                <a href="{{ url_for('diary.index') }}" class="nav-link-item {% if request.endpoint and 'diary' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-journal-richtext text-warning"></i>
-                    <span>My Personal Diary</span>
-                </a>
 
                 <div class="menu-category">Learning & Exams</div>
                 <a href="{{ url_for('exams.index') }}" class="nav-link-item {% if request.endpoint and 'exams' in request.endpoint %}active{% endif %}">
