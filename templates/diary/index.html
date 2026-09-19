@@ -1,40 +1,85 @@
 {% extends "base.html" %}
 
-{% block title %}My Personal Diary — SkillBasis Academy{% endblock %}
-{% block header_title %}My Personal Diary{% endblock %}
+{% block title %}My Personal Diary — Personal Space — SkillBasis Academy{% endblock %}
+{% block header_title %}Personal Space / My Diary{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3" style="max-width: 1120px;">
-    <!-- Diary Header -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-3 bg-white rounded-4 shadow-sm border">
-        <div class="d-flex align-items-center gap-3">
-            <div class="diary-brand-icon">
-                <i class="bi bi-journal-bookmark-fill text-white fs-4"></i>
-            </div>
-            <div>
-                <h3 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                    My Personal Diary
-                    <span class="badge bg-indigo-subtle text-indigo border border-indigo-subtle rounded-pill fs-7 py-1 px-2.5">
-                        <i class="bi bi-shield-lock-fill me-1"></i> AES-256 Encrypted
+<div class="container-fluid py-2" style="max-width: 1140px;">
+    <!-- PERSONAL SPACE HERO BANNER -->
+    <div class="personal-space-hero mb-4 p-4 rounded-4 position-relative overflow-hidden shadow-sm">
+        <div class="hero-ambient-glow"></div>
+        <div class="row align-items-center position-relative z-1 g-3">
+            <div class="col-lg-7">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-warning text-dark font-monospace fw-bold px-3 py-1.5 rounded-pill shadow-xs">
+                        <i class="bi bi-stars me-1"></i> Personal Sanctuary
                     </span>
+                    <span class="badge bg-white bg-opacity-15 text-white border border-white border-opacity-25 rounded-pill px-3 py-1.5 fs-7">
+                        <i class="bi bi-shield-lock-fill text-warning me-1"></i> AES-256 HKDF Encrypted
+                    </span>
+                </div>
+                <h3 class="fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                    Welcome to your Personal Diary, {{ current_user.first_name }}
                 </h3>
-                <p class="text-muted small mb-0">Your private, encrypted digital notebook inside SkillBasis.</p>
+                <p class="text-white-50 small mb-0" style="max-width: 580px;">
+                    Your private digital journal inside SkillBasis. Fully encrypted end-to-end — completely isolated from teachers, admins, and external access.
+                </p>
+            </div>
+            
+            <!-- Quick Metrics Cards -->
+            <div class="col-lg-5">
+                <div class="row g-2">
+                    <div class="col-4">
+                        <div class="personal-stat-box p-2.5 text-center rounded-3">
+                            <i class="bi bi-journal-check text-warning fs-5 mb-1 d-block"></i>
+                            <div class="fw-bold text-white fs-5" id="heroTotalEntries">0</div>
+                            <div class="text-white-50 fs-8">Entries</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="personal-stat-box p-2.5 text-center rounded-3">
+                            <i class="bi bi-fire text-danger fs-5 mb-1 d-block"></i>
+                            <div class="fw-bold text-white fs-5" id="heroStreak">1 Day</div>
+                            <div class="text-white-50 fs-8">Streak</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="personal-stat-box p-2.5 text-center rounded-3">
+                            <i class="bi bi-pencil-fill text-info fs-5 mb-1 d-block"></i>
+                            <div class="fw-bold text-white fs-5" id="heroWordCount">0</div>
+                            <div class="text-white-50 fs-8">Words</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
 
+    <!-- MAIN CONTROLS & VIEW SWITCHER ROW -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-2 bg-white rounded-4 shadow-sm border">
         <!-- 4 Independent View Modes Switcher -->
-        <div class="diary-view-switcher" role="group" aria-label="Diary View Switcher">
+        <div class="diary-view-switcher w-sm-auto" role="group" aria-label="Diary View Switcher">
             <button type="button" class="diary-view-btn active" id="btnViewDay" onclick="switchDiaryView('day')">
-                <i class="bi bi-calendar-day"></i> Day
+                <i class="bi bi-calendar-day"></i> Day View
             </button>
             <button type="button" class="diary-view-btn" id="btnViewWeek" onclick="switchDiaryView('week')">
-                <i class="bi bi-calendar-week"></i> Week
+                <i class="bi bi-calendar-week"></i> Week View
             </button>
             <button type="button" class="diary-view-btn" id="btnViewMonth" onclick="switchDiaryView('month')">
-                <i class="bi bi-calendar-month"></i> Month
+                <i class="bi bi-calendar-month"></i> Month View
             </button>
             <button type="button" class="diary-view-btn" id="btnViewYear" onclick="switchDiaryView('year')">
-                <i class="bi bi-calendar3"></i> Year
+                <i class="bi bi-calendar3"></i> Year Overview
+            </button>
+        </div>
+
+        <!-- Utility Shortcuts -->
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-light border text-secondary rounded-3" onclick="togglePaperFont()" title="Toggle Serif / Sans-Serif Font">
+                <i class="bi bi-fonts me-1"></i> Font Mode
+            </button>
+            <button class="btn btn-sm btn-light border text-secondary rounded-3" onclick="toggleFocusMode()" id="btnFocusMode" title="Distraction-Free Mode">
+                <i class="bi bi-arrows-fullscreen me-1"></i> Focus Mode
             </button>
         </div>
     </div>
@@ -49,9 +94,9 @@
     </div>
 
     <!-- MAIN VIEW CONTAINER -->
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white" id="mainDiaryCard">
         <!-- 1. DAY VIEW -->
-        <div id="viewContainerDay" class="diary-view-panel p-4">
+        <div id="viewContainerDay" class="diary-view-panel p-3 p-md-4">
             <!-- Day Navigation Header -->
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
                 <div class="d-flex align-items-center gap-2">
@@ -79,9 +124,30 @@
                 </div>
             </div>
 
+            <!-- MOOD & ENERGY SELECTOR CHIPS -->
+            <div class="mb-4 p-3 bg-light rounded-3 border">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <span class="small fw-semibold text-secondary d-flex align-items-center gap-1">
+                        <i class="bi bi-emoji-smile text-warning"></i> How are you feeling today? (Mood Tag)
+                    </span>
+                    <span id="activeMoodBadge" class="badge bg-indigo-subtle text-indigo border border-indigo-subtle rounded-pill small">Mood: Unset</span>
+                </div>
+                <div class="d-flex flex-wrap gap-2" id="moodChipsContainer">
+                    <button type="button" class="mood-chip" onclick="selectMood('Grateful', '😊')">😊 Grateful</button>
+                    <button type="button" class="mood-chip" onclick="selectMood('Productive', '🚀')">🚀 Productive</button>
+                    <button type="button" class="mood-chip" onclick="selectMood('Inspired', '💡')">💡 Inspired</button>
+                    <button type="button" class="mood-chip" onclick="selectMood('Calm', '🌿')">🌿 Calm</button>
+                    <button type="button" class="mood-chip" onclick="selectMood('Focused', '🎯')">🎯 Focused</button>
+                    <button type="button" class="mood-chip" onclick="selectMood('Relaxed', '☕')">☕ Relaxed</button>
+                    <button type="button" class="mood-chip" onclick="selectMood('Energetic', '⚡')">⚡ Energetic</button>
+                    <button type="button" class="mood-chip" onclick="selectMood('Reflective', '💭')">💭 Reflective</button>
+                </div>
+            </div>
+
             <!-- READ MODE -->
             <div id="dayReadMode" class="diary-mode-panel">
                 <div class="notebook-paper-container mb-4">
+                    <div class="notebook-spine-ribbon"></div>
                     <div class="notebook-paper-margin"></div>
                     <div id="readContentBox" class="notebook-paper-content">
                         <div class="text-center p-5 text-muted">
@@ -92,10 +158,13 @@
                 </div>
 
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-2">
-                    <span id="readLastUpdated" class="text-muted small d-flex align-items-center gap-1"></span>
+                    <div class="d-flex align-items-center gap-3 text-muted small">
+                        <span id="readLastUpdated"><i class="bi bi-clock-history me-1"></i> Never saved</span>
+                        <span id="readEstTime" class="badge bg-light text-muted border font-monospace">0 min read</span>
+                    </div>
                     <div class="d-flex align-items-center gap-2">
                         <button id="btnStartEdit" class="btn btn-indigo px-4 fw-semibold shadow-sm rounded-3" onclick="enterEditMode()">
-                            <i class="bi bi-pencil-square me-1.5"></i> Edit Entry
+                            <i class="bi bi-pencil-square me-1.5"></i> Edit Journal Entry
                         </button>
                         <button id="btnStartWrite" class="btn btn-emerald px-4 fw-semibold shadow-sm rounded-3 d-none" onclick="enterEditMode()">
                             <i class="bi bi-journal-plus me-1.5"></i> Write Entry
@@ -113,14 +182,18 @@
                     <div class="mb-3">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <label class="form-label fw-semibold text-secondary small mb-0">
-                                <i class="bi bi-pencil-fill me-1 text-primary"></i> Journal Entry Content (Encrypted at rest)
+                                <i class="bi bi-pencil-fill me-1 text-primary"></i> Write Your Journal Entry (Auto-Encrypted)
                             </label>
-                            <span id="wordCharCounter" class="badge bg-light text-muted border font-monospace small">0 words | 0 chars</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span id="saveStatusIndicator" class="small text-muted me-2"><i class="bi bi-check-all text-success"></i> Ready</span>
+                                <span id="wordCharCounter" class="badge bg-light text-muted border font-monospace small">0 words | 0 chars</span>
+                            </div>
                         </div>
                         
                         <div class="notebook-paper-container edit-mode">
+                            <div class="notebook-spine-ribbon"></div>
                             <div class="notebook-paper-margin"></div>
-                            <textarea id="diaryEditor" class="form-control notebook-paper-textarea" rows="12" placeholder="Dear Diary, today..." oninput="updateWordCounter()"></textarea>
+                            <textarea id="diaryEditor" class="form-control notebook-paper-textarea" rows="14" placeholder="Dear Diary, today was..." oninput="updateWordCounter()"></textarea>
                         </div>
                     </div>
                     <div class="d-flex align-items-center justify-content-between pt-3 border-top">
@@ -129,7 +202,7 @@
                         </button>
                         <button type="submit" id="btnSaveDiary" class="btn btn-indigo px-5 fw-semibold shadow-sm rounded-3">
                             <span id="btnSaveSpinner" class="spinner-border spinner-border-sm me-1.5 d-none" role="status"></span>
-                            <span id="btnSaveText"><i class="bi bi-check-circle-fill me-1.5"></i> Save Entry</span>
+                            <span id="btnSaveText"><i class="bi bi-check-circle-fill me-1.5"></i> Save Changes</span>
                         </button>
                     </div>
                 </form>
@@ -137,7 +210,7 @@
         </div>
 
         <!-- 2. WEEK VIEW -->
-        <div id="viewContainerWeek" class="diary-view-panel p-4 d-none">
+        <div id="viewContainerWeek" class="diary-view-panel p-3 p-md-4 d-none">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navWeek(-1)">
@@ -160,7 +233,7 @@
         </div>
 
         <!-- 3. MONTH VIEW -->
-        <div id="viewContainerMonth" class="diary-view-panel p-4 d-none">
+        <div id="viewContainerMonth" class="diary-view-panel p-3 p-md-4 d-none">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navMonth(-1)">
@@ -174,7 +247,7 @@
                     </button>
                 </div>
                 <h4 class="fw-bold text-dark mb-0" id="monthDisplayTitle">Loading Month...</h4>
-                <div></div>
+                <div id="monthProgressPill" class="badge bg-indigo-subtle text-indigo border border-indigo-subtle rounded-pill px-3 py-1.5">0% Journaled</div>
             </div>
 
             <!-- Calendar Table -->
@@ -199,7 +272,7 @@
         </div>
 
         <!-- 4. YEAR VIEW -->
-        <div id="viewContainerYear" class="diary-view-panel p-4 d-none">
+        <div id="viewContainerYear" class="diary-view-panel p-3 p-md-4 d-none">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navYear(-1)">
@@ -230,9 +303,10 @@ let currentDate = new Date('{{ initial_date }}' || '{{ today_date }}');
 let todayDateStr = '{{ today_date }}';
 let currentEntryData = null;
 let isEditDirty = false;
+let selectedMood = '';
+let isSerifFont = false;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initial setup
     const editor = document.getElementById('diaryEditor');
     if (editor) {
         editor.addEventListener('input', function() {
@@ -263,15 +337,64 @@ function checkUnsavedChanges() {
     return true;
 }
 
+function selectMood(moodName, emoji) {
+    selectedMood = `${emoji} ${moodName}`;
+    document.querySelectorAll('.mood-chip').forEach(chip => {
+        if (chip.textContent.includes(moodName)) {
+            chip.classList.add('active');
+        } else {
+            chip.classList.remove('active');
+        }
+    });
+
+    const badge = document.getElementById('activeMoodBadge');
+    if (badge) {
+        badge.textContent = `Mood: ${selectedMood}`;
+        badge.className = 'badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill small';
+    }
+
+    isEditDirty = true;
+}
+
+function togglePaperFont() {
+    isSerifFont = !isSerifFont;
+    const containers = document.querySelectorAll('.notebook-paper-content, .notebook-paper-textarea');
+    containers.forEach(el => {
+        if (isSerifFont) {
+            el.style.fontFamily = 'Georgia, "Times New Roman", serif';
+        } else {
+            el.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        }
+    });
+}
+
+function toggleFocusMode() {
+    const card = document.getElementById('mainDiaryCard');
+    const btn = document.getElementById('btnFocusMode');
+    if (!card) return;
+
+    if (card.classList.contains('diary-focus-mode')) {
+        card.classList.remove('diary-focus-mode');
+        btn.innerHTML = '<i class="bi bi-arrows-fullscreen me-1"></i> Focus Mode';
+    } else {
+        card.classList.add('diary-focus-mode');
+        btn.innerHTML = '<i class="bi bi-fullscreen-exit me-1"></i> Exit Focus';
+    }
+}
+
 function updateWordCounter() {
     const editor = document.getElementById('diaryEditor');
     const counter = document.getElementById('wordCharCounter');
+    const estTime = document.getElementById('readEstTime');
     if (!editor || !counter) return;
     
     const text = editor.value.trim();
     const words = text ? text.split(/\s+/).length : 0;
     const chars = editor.value.length;
+    const readMins = Math.ceil(words / 200);
+
     counter.textContent = `${words} ${words === 1 ? 'word' : 'words'} | ${chars} ${chars === 1 ? 'char' : 'chars'}`;
+    if (estTime) estTime.textContent = `${readMins} min read`;
 }
 
 function showDiaryAlert(msg, type = 'success') {
@@ -355,7 +478,7 @@ function loadDayView() {
     contentBox.innerHTML = `
         <div class="text-center p-5 text-muted">
             <div class="spinner-border text-primary spinner-border-sm mb-2"></div>
-            <div>Retrieving encrypted diary entry...</div>
+            <div>Decrypting your private entry...</div>
         </div>`;
 
     fetch(`/diary/api/entry/${dateStr}`)
@@ -369,21 +492,42 @@ function loadDayView() {
             if (data.has_entry && data.entry) {
                 currentEntryData = data.entry;
                 contentBox.textContent = data.entry.content;
+                
+                // Parse Mood if present
+                const moodMatch = data.entry.content.match(/^\[Mood:\s*([^\]]+)\]/);
+                if (moodMatch) {
+                    selectedMood = moodMatch[1];
+                    const badge = document.getElementById('activeMoodBadge');
+                    if (badge) {
+                        badge.textContent = `Mood: ${selectedMood}`;
+                        badge.className = 'badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill small';
+                    }
+                }
+
+                const words = data.entry.content.trim().split(/\s+/).length;
+                document.getElementById('heroWordCount').textContent = words;
                 document.getElementById('readLastUpdated').innerHTML = `<i class="bi bi-clock-history me-1"></i> Last saved: ${new Date(data.entry.updated_at).toLocaleString()}`;
                 document.getElementById('btnStartEdit').classList.remove('d-none');
                 document.getElementById('btnStartWrite').classList.add('d-none');
                 document.getElementById('btnDeleteEntry').classList.remove('d-none');
             } else {
                 currentEntryData = null;
+                selectedMood = '';
+                const badge = document.getElementById('activeMoodBadge');
+                if (badge) {
+                    badge.textContent = 'Mood: Unset';
+                    badge.className = 'badge bg-indigo-subtle text-indigo border border-indigo-subtle rounded-pill small';
+                }
+
                 contentBox.innerHTML = `
                     <div class="text-center py-5 text-muted">
                         <div class="empty-entry-illustration mb-3">
-                            <i class="bi bi-journal-album text-indigo opacity-75 fs-1"></i>
+                            <i class="bi bi-journal-richtext text-indigo opacity-75 fs-1"></i>
                         </div>
-                        <h5 class="fw-bold text-dark mb-1">No diary entry for this day</h5>
-                        <p class="small text-muted mb-4">Capture your memories, goals, reflection, or notes for ${dateStr}.</p>
+                        <h5 class="fw-bold text-dark mb-1">No entry recorded for ${dateStr}</h5>
+                        <p class="small text-muted mb-4" style="max-width: 420px; margin: 0 auto;">Capture your thoughts, daily reflection, goals, or memories in your personal diary.</p>
                         <button class="btn btn-indigo px-4 fw-semibold rounded-3 shadow-sm" onclick="enterEditMode()">
-                            <i class="bi bi-plus-circle me-1.5"></i> Write Entry
+                            <i class="bi bi-plus-circle me-1.5"></i> Start Writing Entry
                         </button>
                     </div>`;
                 document.getElementById('readLastUpdated').textContent = '';
@@ -437,12 +581,16 @@ function cancelEditMode() {
 
 function handleDiarySave(e) {
     e.preventDefault();
-    const content = document.getElementById('diaryEditor').value.trim();
+    let content = document.getElementById('diaryEditor').value.trim();
     const dateStr = formatDateISO(currentDate);
 
     if (!content) {
         showDiaryAlert("Diary entry content cannot be empty.", "warning");
         return;
+    }
+
+    if (selectedMood && !content.startsWith('[Mood:')) {
+        content = `[Mood: ${selectedMood}]\n\n` + content;
     }
 
     // Disable Save Button & Prevent Duplicate Requests
@@ -452,7 +600,7 @@ function handleDiarySave(e) {
 
     saveBtn.disabled = true;
     saveSpinner.classList.remove('d-none');
-    saveText.textContent = ' Saving...';
+    saveText.textContent = ' Saving & Encrypting...';
 
     fetch('/diary/api/entry', {
         method: 'POST',
@@ -469,7 +617,7 @@ function handleDiarySave(e) {
     .then(data => {
         saveBtn.disabled = false;
         saveSpinner.classList.add('d-none');
-        saveText.innerHTML = '<i class="bi bi-check-circle-fill me-1.5"></i> Save Entry';
+        saveText.innerHTML = '<i class="bi bi-check-circle-fill me-1.5"></i> Save Changes';
 
         if (data.success) {
             isEditDirty = false;
@@ -483,7 +631,7 @@ function handleDiarySave(e) {
         console.error("Save error:", err);
         saveBtn.disabled = false;
         saveSpinner.classList.add('d-none');
-        saveText.innerHTML = '<i class="bi bi-check-circle-fill me-1.5"></i> Save Entry';
+        saveText.innerHTML = '<i class="bi bi-check-circle-fill me-1.5"></i> Save Changes';
         showDiaryAlert("Server error while saving diary entry. Please try again.", "danger");
     });
 }
@@ -513,7 +661,6 @@ function deleteCurrentEntry() {
 // 2. WEEK VIEW
 // ----------------------------------------------------
 function loadWeekView() {
-    // Determine Start of Week (Monday)
     const d = new Date(currentDate);
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday start
@@ -588,14 +735,21 @@ function loadMonthView() {
             const entryDates = new Set((data.entries || []).map(e => e.date));
             const firstDay = new Date(year, month - 1, 1);
             const lastDay = new Date(year, month, 0);
-            
+            const totalDays = lastDay.getDate();
+            const count = entryDates.size;
+            const pct = Math.round((count / totalDays) * 100);
+
+            const pill = document.getElementById('monthProgressPill');
+            if (pill) pill.textContent = `${count} / ${totalDays} Days (${pct}%) Journaled`;
+
+            document.getElementById('heroTotalEntries').textContent = (data.entries || []).length;
+
             let startDayIndex = firstDay.getDay() - 1; // Mon = 0
             if (startDayIndex === -1) startDayIndex = 6; // Sun
 
             const tbody = document.getElementById('monthCalendarBody');
             let html = '';
             let dateCounter = 1;
-            const totalDays = lastDay.getDate();
 
             for (let r = 0; r < 6; r++) {
                 if (dateCounter > totalDays) break;
@@ -651,6 +805,8 @@ function loadYearView() {
                 countsByMonth[m] = (countsByMonth[m] || 0) + 1;
             });
 
+            document.getElementById('heroTotalEntries').textContent = (data.entries || []).length;
+
             const grid = document.getElementById('yearGridContainer');
             let html = '';
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -701,7 +857,7 @@ function jumpToMonth(year, month) {
 </script>
 
 <style>
-/* DIARY CUSTOM DESIGN SYSTEM */
+/* PERSONAL SPACE DIARY DESIGN SYSTEM */
 :root {
     --indigo-primary: #4F46E5;
     --indigo-hover: #4338CA;
@@ -710,53 +866,55 @@ function jumpToMonth(year, month) {
     --emerald-light: #ECFDF5;
 }
 
-.bg-indigo { background-color: var(--indigo-primary)!important; }
-.bg-indigo-subtle { background-color: var(--indigo-light)!important; }
-.text-indigo { color: var(--indigo-primary)!important; }
-.border-indigo-subtle { border-color: #C7D2FE!important; }
+.fs-7 { font-size: 0.75rem!important; }
+.fs-8 { font-size: 0.7rem!important; }
 
-.bg-emerald-subtle { background-color: var(--emerald-light)!important; }
-.text-emerald { color: #047857!important; }
-.border-emerald-subtle { border-color: #A7F3D0!important; }
-
-.btn-indigo {
-    background-color: var(--indigo-primary);
+/* Hero Banner */
+.personal-space-hero {
+    background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
     color: #ffffff;
-    border: none;
+    box-shadow: 0 10px 30px rgba(49, 46, 129, 0.25);
 }
-.btn-indigo:hover, .btn-indigo:focus {
-    background-color: var(--indigo-hover);
-    color: #ffffff;
+.hero-ambient-glow {
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(129, 140, 248, 0.35) 0%, rgba(79, 70, 229, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
 }
-
-.btn-outline-indigo {
-    color: var(--indigo-primary);
-    border-color: var(--indigo-primary);
-}
-.btn-outline-indigo:hover, .btn-outline-indigo:focus {
-    background-color: var(--indigo-primary);
-    color: #ffffff;
+.personal-stat-box {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.btn-emerald {
-    background-color: var(--emerald-primary);
-    color: #ffffff;
-    border: none;
+/* Mood Chips */
+.mood-chip {
+    border: 1px solid #E2E8F0;
+    background: #ffffff;
+    color: #475569;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
-.btn-emerald:hover, .btn-emerald:focus {
-    background-color: #059669;
-    color: #ffffff;
+.mood-chip:hover {
+    background: #F8FAFC;
+    border-color: #CBD5E1;
+    transform: translateY(-1px);
 }
-
-.diary-brand-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #4F46E5, #818CF8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+.mood-chip.active {
+    background: #FEF3C7;
+    border-color: #F59E0B;
+    color: #92400E;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
 }
 
 /* View Switcher Segmented Control */
@@ -780,6 +938,7 @@ function jumpToMonth(year, month) {
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 }
 .diary-view-btn:hover {
     color: #1E293B;
@@ -796,24 +955,34 @@ function jumpToMonth(year, month) {
     position: relative;
     border-radius: 14px;
     border: 1px solid #E2E8F0;
-    background: linear-gradient(to bottom, transparent 27px, #F1F5F9 28px) 0 0 / 100% 28px, #FFFFFF;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03);
+    background: linear-gradient(to bottom, transparent 27px, #E2E8F0 28px) 0 0 / 100% 28px, #FAF9F6;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 6px 18px rgba(0,0,0,0.04);
     overflow: hidden;
+    transition: all 0.3s ease;
+}
+.notebook-spine-ribbon {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 8px;
+    background: linear-gradient(to right, #4F46E5, #818CF8);
+    z-index: 3;
 }
 .notebook-paper-margin {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 44px;
+    left: 48px;
     width: 2px;
-    background-color: #F87171;
-    opacity: 0.7;
+    background-color: #EF4444;
+    opacity: 0.6;
     z-index: 2;
     pointer-events: none;
 }
 .notebook-paper-content {
-    min-height: 280px;
-    padding: 16px 20px 16px 56px;
+    min-height: 320px;
+    padding: 16px 20px 16px 60px;
     white-space: pre-wrap;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 1.05rem;
@@ -821,8 +990,8 @@ function jumpToMonth(year, month) {
     color: #1E293B;
 }
 .notebook-paper-textarea {
-    min-height: 280px;
-    padding: 16px 20px 16px 56px!important;
+    min-height: 320px;
+    padding: 16px 20px 16px 60px!important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 1.05rem!important;
     line-height: 28px!important;
@@ -835,6 +1004,19 @@ function jumpToMonth(year, month) {
 .notebook-paper-textarea:focus {
     outline: none;
     box-shadow: none!important;
+}
+
+/* Distraction Free Focus Mode */
+.diary-focus-mode {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 2000;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5)!important;
+    border-radius: 16px!important;
+    overflow-y: auto!important;
 }
 
 /* Grid Cards & Hover Effects */
@@ -878,4 +1060,3 @@ function jumpToMonth(year, month) {
 }
 </style>
 {% endblock %}
-

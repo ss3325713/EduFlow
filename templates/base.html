@@ -81,16 +81,18 @@
                     <i class="bi bi-clock-fill"></i>
                     <span>Timetable</span>
                 </a>
-                <a href="{{ url_for('diary.index') }}" class="nav-link-item {% if request.endpoint and 'diary' in request.endpoint %}active{% endif %}">
-                    <i class="bi bi-journal-bookmark-fill"></i>
-                    <span>My Diary</span>
-                </a>
                 {% if not current_user.is_teacher() %}
                 <a href="{{ url_for('fees.index') }}" class="nav-link-item {% if request.endpoint and 'fees' in request.endpoint %}active{% endif %}">
                     <i class="bi bi-cash-stack"></i>
                     <span>Fees & Receipts</span>
                 </a>
                 {% endif %}
+
+                <div class="menu-category">Personal Space</div>
+                <a href="{{ url_for('diary.index') }}" class="nav-link-item {% if request.endpoint and 'diary' in request.endpoint %}active{% endif %}">
+                    <i class="bi bi-journal-richtext text-warning"></i>
+                    <span>My Personal Diary</span>
+                </a>
 
                 <div class="menu-category">Learning & Exams</div>
                 <a href="{{ url_for('exams.index') }}" class="nav-link-item {% if request.endpoint and 'exams' in request.endpoint %}active{% endif %}">
