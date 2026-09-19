@@ -57,7 +57,13 @@ def create_app(config_name='development'):
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        if not user_id:
+            return None
+        try:
+            clean_id = str(user_id).split('|')[0]
+            return User.query.get(int(clean_id))
+        except (ValueError, TypeError):
+            return None
 
 
     # Global context processors for templates
