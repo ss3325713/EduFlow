@@ -1,39 +1,50 @@
 {% extends "base.html" %}
 
-{% block title %}My Diary — SkillBasis Academy{% endblock %}
+{% block title %}My Personal Diary — SkillBasis Academy{% endblock %}
 {% block header_title %}My Personal Diary{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3" style="max-width: 1100px;">
+<div class="container-fluid py-3" style="max-width: 1120px;">
     <!-- Diary Header -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-        <div>
-            <h3 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                <i class="bi bi-journal-bookmark-fill text-primary"></i> My Personal Diary
-            </h3>
-            <p class="text-muted small mb-0">Your private, encrypted digital notebook inside SkillBasis.</p>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-3 bg-white rounded-4 shadow-sm border">
+        <div class="d-flex align-items-center gap-3">
+            <div class="diary-brand-icon">
+                <i class="bi bi-journal-bookmark-fill text-white fs-4"></i>
+            </div>
+            <div>
+                <h3 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                    My Personal Diary
+                    <span class="badge bg-indigo-subtle text-indigo border border-indigo-subtle rounded-pill fs-7 py-1 px-2.5">
+                        <i class="bi bi-shield-lock-fill me-1"></i> AES-256 Encrypted
+                    </span>
+                </h3>
+                <p class="text-muted small mb-0">Your private, encrypted digital notebook inside SkillBasis.</p>
+            </div>
         </div>
 
         <!-- 4 Independent View Modes Switcher -->
-        <div class="btn-group shadow-sm p-1 bg-white rounded-3 border" role="group" aria-label="Diary View Switcher">
-            <button type="button" class="btn btn-sm btn-outline-primary rounded-2 px-3 fw-semibold diary-view-btn" id="btnViewDay" onclick="switchDiaryView('day')">
-                <i class="bi bi-calendar-day me-1"></i> Day
+        <div class="diary-view-switcher" role="group" aria-label="Diary View Switcher">
+            <button type="button" class="diary-view-btn active" id="btnViewDay" onclick="switchDiaryView('day')">
+                <i class="bi bi-calendar-day"></i> Day
             </button>
-            <button type="button" class="btn btn-sm btn-outline-primary rounded-2 px-3 fw-semibold diary-view-btn" id="btnViewWeek" onclick="switchDiaryView('week')">
-                <i class="bi bi-calendar-week me-1"></i> Week
+            <button type="button" class="diary-view-btn" id="btnViewWeek" onclick="switchDiaryView('week')">
+                <i class="bi bi-calendar-week"></i> Week
             </button>
-            <button type="button" class="btn btn-sm btn-outline-primary rounded-2 px-3 fw-semibold diary-view-btn" id="btnViewMonth" onclick="switchDiaryView('month')">
-                <i class="bi bi-calendar-month me-1"></i> Month
+            <button type="button" class="diary-view-btn" id="btnViewMonth" onclick="switchDiaryView('month')">
+                <i class="bi bi-calendar-month"></i> Month
             </button>
-            <button type="button" class="btn btn-sm btn-outline-primary rounded-2 px-3 fw-semibold diary-view-btn" id="btnViewYear" onclick="switchDiaryView('year')">
-                <i class="bi bi-calendar3 me-1"></i> Year
+            <button type="button" class="diary-view-btn" id="btnViewYear" onclick="switchDiaryView('year')">
+                <i class="bi bi-calendar3"></i> Year
             </button>
         </div>
     </div>
 
     <!-- Alert Banner -->
-    <div id="diaryAlert" class="alert alert-dismissible fade show d-none border-0 shadow-sm mb-4" role="alert">
-        <span id="diaryAlertMsg"></span>
+    <div id="diaryAlert" class="alert alert-dismissible fade show d-none border-0 shadow-sm mb-4 rounded-3" role="alert">
+        <div class="d-flex align-items-center gap-2">
+            <i id="diaryAlertIcon" class="bi bi-check-circle-fill fs-5"></i>
+            <span id="diaryAlertMsg" class="fw-medium"></span>
+        </div>
         <button type="button" class="btn-close" onclick="hideDiaryAlert()"></button>
     </div>
 
@@ -44,13 +55,13 @@
             <!-- Day Navigation Header -->
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navDay(-1)" title="Previous Day">
+                    <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navDay(-1)" title="Previous Day">
                         <i class="bi bi-chevron-left"></i>
                     </button>
-                    <button class="btn btn-outline-primary btn-sm px-3 fw-semibold" onclick="navToday()">
-                        Today
+                    <button class="btn btn-outline-indigo btn-sm px-3 fw-semibold rounded-pill" onclick="navToday()">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Today
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navDay(1)" title="Next Day">
+                    <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navDay(1)" title="Next Day">
                         <i class="bi bi-chevron-right"></i>
                     </button>
                 </div>
@@ -61,29 +72,35 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
-                    <input type="date" id="dayDatePicker" class="form-control form-control-sm border-secondary-subtle" style="width: 140px;" onchange="onDatePickerChange(this.value)">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
+                        <input type="date" id="dayDatePicker" class="form-control border-start-0 ps-0" style="max-width: 140px;" onchange="onDatePickerChange(this.value)">
+                    </div>
                 </div>
             </div>
 
             <!-- READ MODE -->
             <div id="dayReadMode" class="diary-mode-panel">
-                <div id="readContentBox" class="p-4 rounded-3 border bg-light mb-4" style="min-height: 250px; white-space: pre-wrap; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 1.05rem; line-height: 1.6; color: #2c3e50;">
-                    <div class="text-center p-5 text-muted">
-                        <div class="spinner-border text-primary spinner-border-sm mb-2"></div>
-                        <div>Loading entry...</div>
+                <div class="notebook-paper-container mb-4">
+                    <div class="notebook-paper-margin"></div>
+                    <div id="readContentBox" class="notebook-paper-content">
+                        <div class="text-center p-5 text-muted">
+                            <div class="spinner-border text-primary spinner-border-sm mb-2"></div>
+                            <div>Retrieving encrypted diary entry...</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center justify-content-between pt-2">
-                    <span id="readLastUpdated" class="text-muted small"></span>
-                    <div>
-                        <button id="btnStartEdit" class="btn btn-primary px-4 fw-semibold shadow-sm" onclick="enterEditMode()">
-                            <i class="bi bi-pencil-square me-1"></i> Edit Entry
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-2">
+                    <span id="readLastUpdated" class="text-muted small d-flex align-items-center gap-1"></span>
+                    <div class="d-flex align-items-center gap-2">
+                        <button id="btnStartEdit" class="btn btn-indigo px-4 fw-semibold shadow-sm rounded-3" onclick="enterEditMode()">
+                            <i class="bi bi-pencil-square me-1.5"></i> Edit Entry
                         </button>
-                        <button id="btnStartWrite" class="btn btn-success px-4 fw-semibold shadow-sm d-none" onclick="enterEditMode()">
-                            <i class="bi bi-journal-plus me-1"></i> Write Entry
+                        <button id="btnStartWrite" class="btn btn-emerald px-4 fw-semibold shadow-sm rounded-3 d-none" onclick="enterEditMode()">
+                            <i class="bi bi-journal-plus me-1.5"></i> Write Entry
                         </button>
-                        <button id="btnDeleteEntry" class="btn btn-outline-danger btn-sm px-3 ms-2 d-none" onclick="deleteCurrentEntry()">
+                        <button id="btnDeleteEntry" class="btn btn-outline-danger btn-sm px-3 rounded-3 d-none" onclick="deleteCurrentEntry()">
                             <i class="bi bi-trash me-1"></i> Delete
                         </button>
                     </div>
@@ -94,16 +111,25 @@
             <div id="dayEditMode" class="diary-mode-panel d-none">
                 <form id="diaryForm" onsubmit="handleDiarySave(event)">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-secondary small">Diary Entry Content (Encrypted at rest)</label>
-                        <textarea id="diaryEditor" class="form-control rounded-3 p-3 shadow-none" rows="10" placeholder="Dear Diary, today..." style="font-size: 1.05rem; line-height: 1.6; border-color: #cbd5e1;"></textarea>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="form-label fw-semibold text-secondary small mb-0">
+                                <i class="bi bi-pencil-fill me-1 text-primary"></i> Journal Entry Content (Encrypted at rest)
+                            </label>
+                            <span id="wordCharCounter" class="badge bg-light text-muted border font-monospace small">0 words | 0 chars</span>
+                        </div>
+                        
+                        <div class="notebook-paper-container edit-mode">
+                            <div class="notebook-paper-margin"></div>
+                            <textarea id="diaryEditor" class="form-control notebook-paper-textarea" rows="12" placeholder="Dear Diary, today..." oninput="updateWordCounter()"></textarea>
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-2 border-top">
-                        <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" onclick="cancelEditMode()">
+                    <div class="d-flex align-items-center justify-content-between pt-3 border-top">
+                        <button type="button" class="btn btn-light px-4 fw-semibold border rounded-3 text-secondary" onclick="cancelEditMode()">
                             Cancel
                         </button>
-                        <button type="submit" id="btnSaveDiary" class="btn btn-primary px-5 fw-semibold shadow-sm">
-                            <span id="btnSaveSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
-                            <span id="btnSaveText"><i class="bi bi-check-circle me-1"></i> Save Changes</span>
+                        <button type="submit" id="btnSaveDiary" class="btn btn-indigo px-5 fw-semibold shadow-sm rounded-3">
+                            <span id="btnSaveSpinner" class="spinner-border spinner-border-sm me-1.5 d-none" role="status"></span>
+                            <span id="btnSaveText"><i class="bi bi-check-circle-fill me-1.5"></i> Save Entry</span>
                         </button>
                     </div>
                 </form>
@@ -114,13 +140,13 @@
         <div id="viewContainerWeek" class="diary-view-panel p-4 d-none">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navWeek(-1)">
+                    <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navWeek(-1)">
                         <i class="bi bi-chevron-left"></i>
                     </button>
-                    <button class="btn btn-outline-primary btn-sm px-3 fw-semibold" onclick="navThisWeek()">
+                    <button class="btn btn-outline-indigo btn-sm px-3 fw-semibold rounded-pill" onclick="navThisWeek()">
                         This Week
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navWeek(1)">
+                    <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navWeek(1)">
                         <i class="bi bi-chevron-right"></i>
                     </button>
                 </div>
@@ -137,13 +163,13 @@
         <div id="viewContainerMonth" class="diary-view-panel p-4 d-none">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navMonth(-1)">
+                    <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navMonth(-1)">
                         <i class="bi bi-chevron-left"></i>
                     </button>
-                    <button class="btn btn-outline-primary btn-sm px-3 fw-semibold" onclick="navThisMonth()">
+                    <button class="btn btn-outline-indigo btn-sm px-3 fw-semibold rounded-pill" onclick="navThisMonth()">
                         Current Month
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navMonth(1)">
+                    <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navMonth(1)">
                         <i class="bi bi-chevron-right"></i>
                     </button>
                 </div>
@@ -153,16 +179,16 @@
 
             <!-- Calendar Table -->
             <div class="table-responsive">
-                <table class="table table-bordered align-middle text-center mb-0" style="table-layout: fixed;">
-                    <thead class="table-light text-muted small fw-bold">
+                <table class="table table-bordered align-middle text-center mb-0 diary-calendar-table">
+                    <thead class="bg-light text-secondary small fw-bold text-uppercase">
                         <tr>
-                            <th class="py-2">Mon</th>
-                            <th class="py-2">Tue</th>
-                            <th class="py-2">Wed</th>
-                            <th class="py-2">Thu</th>
-                            <th class="py-2">Fri</th>
-                            <th class="py-2">Sat</th>
-                            <th class="py-2">Sun</th>
+                            <th class="py-2.5">Mon</th>
+                            <th class="py-2.5">Tue</th>
+                            <th class="py-2.5">Wed</th>
+                            <th class="py-2.5">Thu</th>
+                            <th class="py-2.5">Fri</th>
+                            <th class="py-2.5 text-indigo">Sat</th>
+                            <th class="py-2.5 text-indigo">Sun</th>
                         </tr>
                     </thead>
                     <tbody id="monthCalendarBody">
@@ -176,13 +202,13 @@
         <div id="viewContainerYear" class="diary-view-panel p-4 d-none">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
                 <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navYear(-1)">
+                    <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navYear(-1)">
                         <i class="bi bi-chevron-left"></i>
                     </button>
-                    <button class="btn btn-outline-primary btn-sm px-3 fw-semibold" onclick="navThisYear()">
+                    <button class="btn btn-outline-indigo btn-sm px-3 fw-semibold rounded-pill" onclick="navThisYear()">
                         Current Year
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm rounded-circle p-2" onclick="navYear(1)">
+                    <button class="btn btn-light btn-sm rounded-circle p-2 shadow-xs border" onclick="navYear(1)">
                         <i class="bi bi-chevron-right"></i>
                     </button>
                 </div>
@@ -202,7 +228,7 @@
 let currentView = '{{ initial_view }}' || 'day';
 let currentDate = new Date('{{ initial_date }}' || '{{ today_date }}');
 let todayDateStr = '{{ today_date }}';
-let currentEntryData = None = null;
+let currentEntryData = null;
 let isEditDirty = false;
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -211,6 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (editor) {
         editor.addEventListener('input', function() {
             isEditDirty = true;
+            updateWordCounter();
         });
     }
 
@@ -236,12 +263,29 @@ function checkUnsavedChanges() {
     return true;
 }
 
+function updateWordCounter() {
+    const editor = document.getElementById('diaryEditor');
+    const counter = document.getElementById('wordCharCounter');
+    if (!editor || !counter) return;
+    
+    const text = editor.value.trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    const chars = editor.value.length;
+    counter.textContent = `${words} ${words === 1 ? 'word' : 'words'} | ${chars} ${chars === 1 ? 'char' : 'chars'}`;
+}
+
 function showDiaryAlert(msg, type = 'success') {
     const box = document.getElementById('diaryAlert');
     const txt = document.getElementById('diaryAlertMsg');
+    const icon = document.getElementById('diaryAlertIcon');
     if (box && txt) {
-        box.className = `alert alert-${type} alert-dismissible fade show border-0 shadow-sm mb-4`;
+        box.className = `alert alert-${type} alert-dismissible fade show border-0 shadow-sm mb-4 rounded-3`;
         txt.textContent = msg;
+        if (icon) {
+            icon.className = type === 'success' ? 'bi bi-check-circle-fill text-success fs-5' : 
+                             type === 'danger' ? 'bi bi-exclamation-triangle-fill text-danger fs-5' : 
+                             'bi bi-info-circle-fill text-info fs-5';
+        }
         box.classList.remove('d-none');
         setTimeout(() => box.classList.add('d-none'), 5000);
     }
@@ -264,13 +308,11 @@ function switchDiaryView(viewMode, confirmCheck = true) {
     isEditDirty = false;
 
     // Highlight Buttons
-    document.querySelectorAll('.diary-view-btn').forEach(btn => btn.classList.remove('active', 'btn-primary'));
-    document.querySelectorAll('.diary-view-btn').forEach(btn => btn.classList.add('btn-outline-primary'));
+    document.querySelectorAll('.diary-view-btn').forEach(btn => btn.classList.remove('active'));
 
     const activeBtn = document.getElementById(`btnView${viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}`);
     if (activeBtn) {
-        activeBtn.classList.add('active', 'btn-primary');
-        activeBtn.classList.remove('btn-outline-primary');
+        activeBtn.classList.add('active');
     }
 
     // Hide Panels
@@ -327,19 +369,21 @@ function loadDayView() {
             if (data.has_entry && data.entry) {
                 currentEntryData = data.entry;
                 contentBox.textContent = data.entry.content;
-                document.getElementById('readLastUpdated').textContent = `Last saved: ${new Date(data.entry.updated_at).toLocaleString()}`;
+                document.getElementById('readLastUpdated').innerHTML = `<i class="bi bi-clock-history me-1"></i> Last saved: ${new Date(data.entry.updated_at).toLocaleString()}`;
                 document.getElementById('btnStartEdit').classList.remove('d-none');
                 document.getElementById('btnStartWrite').classList.add('d-none');
                 document.getElementById('btnDeleteEntry').classList.remove('d-none');
             } else {
                 currentEntryData = null;
                 contentBox.innerHTML = `
-                    <div class="text-center p-5 text-muted">
-                        <i class="bi bi-journal-x fs-1 text-secondary opacity-50 d-block mb-3"></i>
-                        <h5 class="fw-semibold text-dark mb-1">No diary entry for this day</h5>
-                        <p class="small text-muted mb-3">Write down your memories, goals, or notes for ${dateStr}.</p>
-                        <button class="btn btn-sm btn-primary px-4 fw-semibold shadow-sm" onclick="enterEditMode()">
-                            <i class="bi bi-plus-circle me-1"></i> Write Entry
+                    <div class="text-center py-5 text-muted">
+                        <div class="empty-entry-illustration mb-3">
+                            <i class="bi bi-journal-album text-indigo opacity-75 fs-1"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">No diary entry for this day</h5>
+                        <p class="small text-muted mb-4">Capture your memories, goals, reflection, or notes for ${dateStr}.</p>
+                        <button class="btn btn-indigo px-4 fw-semibold rounded-3 shadow-sm" onclick="enterEditMode()">
+                            <i class="bi bi-plus-circle me-1.5"></i> Write Entry
                         </button>
                     </div>`;
                 document.getElementById('readLastUpdated').textContent = '';
@@ -379,6 +423,7 @@ function enterEditMode() {
 
     const editor = document.getElementById('diaryEditor');
     editor.value = currentEntryData ? currentEntryData.content : '';
+    updateWordCounter();
     editor.focus();
     isEditDirty = false;
 }
@@ -424,7 +469,7 @@ function handleDiarySave(e) {
     .then(data => {
         saveBtn.disabled = false;
         saveSpinner.classList.add('d-none');
-        saveText.innerHTML = '<i class="bi bi-check-circle me-1"></i> Save Changes';
+        saveText.innerHTML = '<i class="bi bi-check-circle-fill me-1.5"></i> Save Entry';
 
         if (data.success) {
             isEditDirty = false;
@@ -438,7 +483,7 @@ function handleDiarySave(e) {
         console.error("Save error:", err);
         saveBtn.disabled = false;
         saveSpinner.classList.add('d-none');
-        saveText.innerHTML = '<i class="bi bi-check-circle me-1"></i> Save Changes';
+        saveText.innerHTML = '<i class="bi bi-check-circle-fill me-1.5"></i> Save Entry';
         showDiaryAlert("Server error while saving diary entry. Please try again.", "danger");
     });
 }
@@ -500,17 +545,17 @@ function loadWeekView() {
 
                 html += `
                     <div class="col-12 col-md-6 col-lg-3">
-                        <div class="card h-100 border ${isToday ? 'border-primary border-2 shadow-sm' : 'border-secondary-subtle'} rounded-3 p-3 text-center cursor-pointer hover-shadow" onclick="jumpToDate('${iso}')">
+                        <div class="card diary-week-card h-100 ${isToday ? 'today-active' : ''} p-3 text-center cursor-pointer" onclick="jumpToDate('${iso}')">
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <span class="fw-bold text-dark fs-5">${dayName}</span>
-                                <span class="badge ${isToday ? 'bg-primary' : 'bg-light text-muted border'}">${dateDisplay}</span>
+                                <span class="badge ${isToday ? 'bg-indigo text-white' : 'bg-light text-muted border'} rounded-pill px-2.5 py-1">${dateDisplay}</span>
                             </div>
                             <div class="py-3">
                                 ${hasEntry ? 
-                                    `<span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Entry Saved</span>` : 
-                                    `<span class="text-muted small">No entry</span>`}
+                                    `<span class="badge bg-emerald-subtle text-emerald border border-emerald-subtle px-3 py-1.5 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Entry Saved</span>` : 
+                                    `<span class="text-muted small opacity-75">No entry</span>`}
                             </div>
-                            <button class="btn btn-sm btn-outline-primary w-100 mt-2">Open Day</button>
+                            <button class="btn btn-sm btn-outline-indigo w-100 mt-2 rounded-2">Open Day</button>
                         </div>
                     </div>`;
             }
@@ -565,10 +610,10 @@ function loadMonthView() {
                         const isToday = (iso === todayDateStr);
 
                         html += `
-                            <td class="py-3 position-relative cursor-pointer ${isToday ? 'bg-primary-subtle fw-bold' : ''}" onclick="jumpToDate('${iso}')" style="height: 75px;">
+                            <td class="py-3 position-relative cursor-pointer diary-cell ${isToday ? 'cell-today' : ''}" onclick="jumpToDate('${iso}')" style="height: 75px;">
                                 <div class="d-flex flex-column align-items-center justify-content-between h-100">
-                                    <span class="small ${isToday ? 'badge bg-primary rounded-circle' : 'text-dark'}">${dateCounter}</span>
-                                    ${hasEntry ? '<span class="badge rounded-circle bg-success p-1" title="Entry Exists">●</span>' : '<span style="height:10px;"></span>'}
+                                    <span class="small ${isToday ? 'badge bg-indigo text-white rounded-circle p-1.5' : 'text-dark fw-medium'}">${dateCounter}</span>
+                                    ${hasEntry ? '<span class="diary-entry-dot" title="Entry Exists"></span>' : '<span style="height:10px;"></span>'}
                                 </div>
                             </td>`;
                         dateCounter++;
@@ -616,14 +661,14 @@ function loadYearView() {
 
                 html += `
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                        <div class="card h-100 border border-secondary-subtle rounded-3 p-3 text-center cursor-pointer hover-shadow" onclick="jumpToMonth(${year}, ${mNum})">
+                        <div class="card diary-year-card h-100 p-3 text-center cursor-pointer" onclick="jumpToMonth(${year}, ${mNum})">
                             <h5 class="fw-bold text-dark mb-2">${mName}</h5>
                             <div class="py-2">
-                                <span class="badge ${cnt > 0 ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-light text-muted border'} px-3 py-2 rounded-pill small">
+                                <span class="badge ${cnt > 0 ? 'bg-indigo-subtle text-indigo border border-indigo-subtle' : 'bg-light text-muted border'} px-3 py-1.5 rounded-pill small">
                                     ${cnt} ${cnt === 1 ? 'entry' : 'entries'}
                                 </span>
                             </div>
-                            <button class="btn btn-sm btn-outline-secondary w-100 mt-2">View Month</button>
+                            <button class="btn btn-sm btn-outline-secondary w-100 mt-2 rounded-2">View Month</button>
                         </div>
                     </div>`;
             });
@@ -656,8 +701,181 @@ function jumpToMonth(year, month) {
 </script>
 
 <style>
+/* DIARY CUSTOM DESIGN SYSTEM */
+:root {
+    --indigo-primary: #4F46E5;
+    --indigo-hover: #4338CA;
+    --indigo-light: #EEF2FF;
+    --emerald-primary: #10B981;
+    --emerald-light: #ECFDF5;
+}
+
+.bg-indigo { background-color: var(--indigo-primary)!important; }
+.bg-indigo-subtle { background-color: var(--indigo-light)!important; }
+.text-indigo { color: var(--indigo-primary)!important; }
+.border-indigo-subtle { border-color: #C7D2FE!important; }
+
+.bg-emerald-subtle { background-color: var(--emerald-light)!important; }
+.text-emerald { color: #047857!important; }
+.border-emerald-subtle { border-color: #A7F3D0!important; }
+
+.btn-indigo {
+    background-color: var(--indigo-primary);
+    color: #ffffff;
+    border: none;
+}
+.btn-indigo:hover, .btn-indigo:focus {
+    background-color: var(--indigo-hover);
+    color: #ffffff;
+}
+
+.btn-outline-indigo {
+    color: var(--indigo-primary);
+    border-color: var(--indigo-primary);
+}
+.btn-outline-indigo:hover, .btn-outline-indigo:focus {
+    background-color: var(--indigo-primary);
+    color: #ffffff;
+}
+
+.btn-emerald {
+    background-color: var(--emerald-primary);
+    color: #ffffff;
+    border: none;
+}
+.btn-emerald:hover, .btn-emerald:focus {
+    background-color: #059669;
+    color: #ffffff;
+}
+
+.diary-brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #4F46E5, #818CF8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+}
+
+/* View Switcher Segmented Control */
+.diary-view-switcher {
+    display: flex;
+    background: #F1F5F9;
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+    border: 1px solid #E2E8F0;
+}
+.diary-view-btn {
+    border: none;
+    background: transparent;
+    color: #64748B;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 6px 16px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.diary-view-btn:hover {
+    color: #1E293B;
+    background: rgba(255, 255, 255, 0.6);
+}
+.diary-view-btn.active {
+    background: #ffffff;
+    color: var(--indigo-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Notebook Lined Paper Aesthetic */
+.notebook-paper-container {
+    position: relative;
+    border-radius: 14px;
+    border: 1px solid #E2E8F0;
+    background: linear-gradient(to bottom, transparent 27px, #F1F5F9 28px) 0 0 / 100% 28px, #FFFFFF;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03);
+    overflow: hidden;
+}
+.notebook-paper-margin {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 44px;
+    width: 2px;
+    background-color: #F87171;
+    opacity: 0.7;
+    z-index: 2;
+    pointer-events: none;
+}
+.notebook-paper-content {
+    min-height: 280px;
+    padding: 16px 20px 16px 56px;
+    white-space: pre-wrap;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 1.05rem;
+    line-height: 28px;
+    color: #1E293B;
+}
+.notebook-paper-textarea {
+    min-height: 280px;
+    padding: 16px 20px 16px 56px!important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 1.05rem!important;
+    line-height: 28px!important;
+    color: #1E293B!important;
+    border: none!important;
+    background: transparent!important;
+    box-shadow: none!important;
+    resize: vertical;
+}
+.notebook-paper-textarea:focus {
+    outline: none;
+    box-shadow: none!important;
+}
+
+/* Grid Cards & Hover Effects */
 .cursor-pointer { cursor: pointer; }
-.hover-shadow:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important; transition: all .2s ease; }
-.transition-all { transition: all .2s ease; }
+.diary-week-card, .diary-year-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    transition: all 0.25s ease;
+}
+.diary-week-card:hover, .diary-year-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08)!important;
+    border-color: #C7D2FE;
+}
+.diary-week-card.today-active {
+    border: 2px solid var(--indigo-primary);
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.15);
+}
+
+/* Calendar Table Styling */
+.diary-calendar-table {
+    table-layout: fixed;
+    border-color: #E2E8F0;
+}
+.diary-cell {
+    transition: all 0.2s ease;
+}
+.diary-cell:hover {
+    background-color: var(--indigo-light)!important;
+}
+.cell-today {
+    background-color: #EEF2FF!important;
+}
+.diary-entry-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--emerald-primary);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
 </style>
 {% endblock %}
+
