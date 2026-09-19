@@ -31,26 +31,31 @@ def create_app(config_name='development'):
             with db.engine.connect() as conn:
                 inspector = db.inspect(db.engine)
                 tables = inspector.get_table_names()
+                is_pg = 'postgres' in db.engine.name.lower()
+                dt_type = "TIMESTAMP" if is_pg else "DATETIME"
+                bool_true = "TRUE" if is_pg else "1"
+                bool_false = "FALSE" if is_pg else "0"
+
                 if 'users' in tables:
                     existing_cols = [c['name'] for c in inspector.get_columns('users')]
                     if 'is_verified' not in existing_cols:
-                        conn.execute(db.text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1"))
+                        conn.execute(db.text(f"ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT {bool_true}"))
                     if 'verification_token_hash' not in existing_cols:
                         conn.execute(db.text("ALTER TABLE users ADD COLUMN verification_token_hash VARCHAR(128)"))
                     if 'verification_sent_at' not in existing_cols:
-                        conn.execute(db.text("ALTER TABLE users ADD COLUMN verification_sent_at DATETIME"))
+                        conn.execute(db.text(f"ALTER TABLE users ADD COLUMN verification_sent_at {dt_type}"))
                     if 'password_reset_token_hash' not in existing_cols:
                         conn.execute(db.text("ALTER TABLE users ADD COLUMN password_reset_token_hash VARCHAR(128)"))
                     if 'password_reset_expires_at' not in existing_cols:
-                        conn.execute(db.text("ALTER TABLE users ADD COLUMN password_reset_expires_at DATETIME"))
+                        conn.execute(db.text(f"ALTER TABLE users ADD COLUMN password_reset_expires_at {dt_type}"))
                 if 'notifications' in tables:
                     notif_cols = [c['name'] for c in inspector.get_columns('notifications')]
                     if 'read_at' not in notif_cols:
-                        conn.execute(db.text("ALTER TABLE notifications ADD COLUMN read_at DATETIME"))
+                        conn.execute(db.text(f"ALTER TABLE notifications ADD COLUMN read_at {dt_type}"))
                     if 'is_deleted' not in notif_cols:
-                        conn.execute(db.text("ALTER TABLE notifications ADD COLUMN is_deleted BOOLEAN DEFAULT 0"))
+                        conn.execute(db.text(f"ALTER TABLE notifications ADD COLUMN is_deleted BOOLEAN DEFAULT {bool_false}"))
                     if 'deleted_at' not in notif_cols:
-                        conn.execute(db.text("ALTER TABLE notifications ADD COLUMN deleted_at DATETIME"))
+                        conn.execute(db.text(f"ALTER TABLE notifications ADD COLUMN deleted_at {dt_type}"))
                 conn.commit()
         except Exception as err:
             app.logger.warning(f"Auto database schema migration notice: {err}")
